@@ -7,8 +7,8 @@
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
 <link href="/ccms/assets/css/style.css" rel="stylesheet">
 </head>
-<body class="ccms-auth-wrapper">
-  <div class="card ccms-auth-card">
+<body class="ccms-auth-wrapper px-3 py-4">
+  <div class="card ccms-auth-card my-auto">
     <div class="card-body p-4 p-md-5 text-center">
       <i class="bi bi-shield-lock" style="font-size:2rem;color:var(--ccms-primary)"></i>
       <h5 class="mt-2">Password Reset</h5>

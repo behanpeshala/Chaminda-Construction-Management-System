@@ -25,6 +25,66 @@ document.addEventListener('DOMContentLoaded', function () {
   });
 
   // -------------------------------------------------------------
+  // MOBILE SIDEBAR DRAWER & BACKDROP LOGIC
+  // -------------------------------------------------------------
+  var sidebar = document.getElementById('ccmsSidebar') || document.querySelector('.ccms-sidebar');
+  var sidebarBackdrop = document.getElementById('sidebarBackdrop');
+  var sidebarToggleBtn = document.getElementById('sidebarToggleBtn');
+  var sidebarCloseBtn = document.getElementById('sidebarCloseBtn');
+
+  function openSidebar() {
+    if (sidebar) sidebar.classList.add('show');
+    if (sidebarBackdrop) sidebarBackdrop.classList.add('show');
+    document.body.classList.add('sidebar-open');
+  }
+
+  function closeSidebar() {
+    if (sidebar) sidebar.classList.remove('show');
+    if (sidebarBackdrop) sidebarBackdrop.classList.remove('show');
+    document.body.classList.remove('sidebar-open');
+  }
+
+  if (sidebarToggleBtn) {
+    sidebarToggleBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      if (sidebar && sidebar.classList.contains('show')) {
+        closeSidebar();
+      } else {
+        openSidebar();
+      }
+    });
+  }
+
+  if (sidebarCloseBtn) {
+    sidebarCloseBtn.addEventListener('click', function (e) {
+      e.stopPropagation();
+      closeSidebar();
+    });
+  }
+
+  if (sidebarBackdrop) {
+    sidebarBackdrop.addEventListener('click', closeSidebar);
+  }
+
+  // Close sidebar on link click on mobile screens
+  if (sidebar) {
+    sidebar.querySelectorAll('.nav-link').forEach(function (link) {
+      link.addEventListener('click', function () {
+        if (window.innerWidth < 992) {
+          closeSidebar();
+        }
+      });
+    });
+  }
+
+  // Close sidebar on Escape key
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && sidebar && sidebar.classList.contains('show')) {
+      closeSidebar();
+    }
+  });
+
+  // -------------------------------------------------------------
   // 1. POPUP TOAST NOTIFICATIONS
   // -------------------------------------------------------------
   window.showToast = function (title, message, type) {

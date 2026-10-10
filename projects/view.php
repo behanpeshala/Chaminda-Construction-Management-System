@@ -93,14 +93,16 @@ require_once __DIR__ . '/../includes/page_start.php';
         <h6 class="mb-2">Project Details</h6>
         <span class="badge bg-secondary align-self-start"><?php echo htmlspecialchars($project['status']); ?></span>
       </div>
-      <table class="table table-sm mb-0">
-        <tr><th style="width:180px">Client</th><td><?php echo htmlspecialchars($project['client_name']); ?></td></tr>
-        <tr><th>Type</th><td><?php echo htmlspecialchars($project['project_type']); ?></td></tr>
-        <tr><th>Location</th><td><?php echo htmlspecialchars($project['location']); ?></td></tr>
-        <tr><th>Start / End Date</th><td><?php echo $project['start_date']; ?> &rarr; <?php echo $project['end_date']; ?></td></tr>
-        <tr><th>Estimated Budget</th><td>LKR <?php echo number_format($project['estimated_budget'],2); ?></td></tr>
-        <tr><th>Project Manager</th><td><?php echo htmlspecialchars($project['pm_name'] ?? '—'); ?></td></tr>
-      </table>
+      <div class="table-responsive">
+        <table class="table table-sm mb-0">
+          <tr><th style="width:180px">Client</th><td><?php echo htmlspecialchars($project['client_name']); ?></td></tr>
+          <tr><th>Type</th><td><?php echo htmlspecialchars($project['project_type']); ?></td></tr>
+          <tr><th>Location</th><td><?php echo htmlspecialchars($project['location']); ?></td></tr>
+          <tr><th>Start / End Date</th><td><?php echo $project['start_date']; ?> &rarr; <?php echo $project['end_date']; ?></td></tr>
+          <tr><th>Estimated Budget</th><td>LKR <?php echo number_format($project['estimated_budget'],2); ?></td></tr>
+          <tr><th>Project Manager</th><td><?php echo htmlspecialchars($project['pm_name'] ?? '—'); ?></td></tr>
+        </table>
+      </div>
     </div>
 
     <div class="card p-3 mb-3">

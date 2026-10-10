@@ -182,10 +182,50 @@ a.text-muted:hover, .text-muted a:hover {
   max-width: 1400px;
 }
 
+/* ---- Mobile Sidebar Drawer & Overlay ---- */
+.ccms-sidebar-backdrop {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.72);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  z-index: 1045;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.25s ease, visibility 0.25s ease;
+}
+
+.ccms-sidebar-backdrop.show {
+  opacity: 1;
+  visibility: visible;
+}
+
 @media (max-width: 991.98px) {
-  .ccms-sidebar { transform: translateX(-100%); }
-  .ccms-sidebar.show { transform: translateX(0); }
-  .ccms-main { margin-left: 0; padding: 1.25rem 1rem; }
+  body.sidebar-open {
+    overflow: hidden;
+  }
+  .ccms-sidebar {
+    top: 0;
+    width: min(290px, 85vw);
+    z-index: 1050;
+    transform: translateX(-100%);
+    box-shadow: 10px 0 35px rgba(0, 0, 0, 0.8);
+    background: #0b1120;
+    padding-top: 1rem;
+    padding-bottom: 2rem;
+  }
+  .ccms-sidebar.show {
+    transform: translateX(0);
+  }
+  .ccms-main {
+    margin-left: 0;
+    padding: 1.25rem 1rem;
+    width: 100%;
+    max-width: 100%;
+  }
 }
 
 /* ---- Cards & Neon Widgets ---- */
@@ -659,5 +699,201 @@ a.text-muted:hover, .text-muted a:hover {
   border: 2px dashed rgba(16, 185, 129, 0.3);
   border-radius: 0.75rem;
   padding: 1.5rem;
+}
+
+/* ==========================================================================
+   Comprehensive Mobile & Tablet Responsive Optimizations
+   ========================================================================== */
+
+/* Prevent accidental horizontal overflow bouncing on touch devices */
+html, body {
+  overflow-x: hidden;
+  max-width: 100vw;
+}
+
+/* Topbar Notification Dropdown Responsive Sizing */
+.ccms-notif-dropdown {
+  width: min(360px, calc(100vw - 20px)) !important;
+  max-width: calc(100vw - 20px) !important;
+  max-height: 80vh !important;
+  overflow: hidden !important;
+  border-radius: 0.75rem !important;
+}
+
+/* Smooth Touch-Friendly Table Scrolling */
+.table-responsive {
+  -webkit-overflow-scrolling: touch;
+  margin-bottom: 0.75rem;
+  border-radius: 0.5rem;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(16, 185, 129, 0.3) rgba(15, 23, 42, 0.5);
+}
+
+.table-responsive::-webkit-scrollbar {
+  height: 6px;
+}
+
+.table-responsive::-webkit-scrollbar-thumb {
+  background: rgba(16, 185, 129, 0.35);
+  border-radius: 4px;
+}
+
+.table-responsive::-webkit-scrollbar-track {
+  background: rgba(15, 23, 42, 0.5);
+}
+
+/* Base button touch target friendliness */
+.btn-xs {
+  padding: 0.25rem 0.5rem;
+  font-size: 0.75rem;
+  border-radius: 0.35rem;
+}
+
+@media (max-width: 768px) {
+  /* Prevent iOS Safari auto-zoom on form inputs */
+  .form-control,
+  .form-select,
+  input[type="text"],
+  input[type="password"],
+  input[type="email"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="date"],
+  select,
+  textarea {
+    font-size: 16px !important;
+  }
+
+  /* Compact typography on small screens */
+  h1 { font-size: 1.85rem !important; }
+  h2 { font-size: 1.6rem !important; }
+  h3 { font-size: 1.4rem !important; }
+  h4 { font-size: 1.25rem !important; }
+  h5 { font-size: 1.1rem !important; }
+  h6 { font-size: 0.95rem !important; }
+
+  /* Compact table styling for high density information on mobile */
+  .table thead th {
+    padding: 0.65rem 0.6rem;
+    font-size: 0.72rem;
+    white-space: nowrap;
+  }
+
+  .table tbody td {
+    padding: 0.65rem 0.6rem;
+    font-size: 0.83rem;
+  }
+
+  .table tfoot th, .table tfoot td {
+    padding: 0.65rem 0.6rem;
+    font-size: 0.83rem;
+  }
+
+  /* Prevent bad wrapping of action buttons in table rows */
+  .table td .btn,
+  .table td form {
+    vertical-align: middle;
+  }
+
+  /* Auth cards on mobile */
+  .ccms-auth-card {
+    margin: 1rem auto;
+    border-radius: 0.75rem;
+  }
+
+  .ccms-auth-card .card-body {
+    padding: 1.5rem 1.25rem !important;
+  }
+
+  /* Quick action buttons wrap nicely with touch padding */
+  .d-flex.flex-wrap.gap-2 .btn {
+    flex: 1 1 auto;
+    text-align: center;
+    white-space: nowrap;
+  }
+}
+
+@media (max-width: 576px) {
+  :root {
+    --topbar-height: 56px;
+  }
+
+  body {
+    padding-top: var(--topbar-height);
+  }
+
+  .ccms-topbar {
+    height: var(--topbar-height);
+    padding: 0 0.65rem;
+  }
+
+  .ccms-topbar .navbar-brand {
+    font-size: 1.05rem;
+  }
+
+  .user-badge-container {
+    padding: 0.25rem 0.5rem !important;
+  }
+
+  .ccms-main {
+    padding: 0.85rem 0.5rem;
+  }
+
+  /* Card padding on small phones */
+  .card {
+    border-radius: 0.6rem;
+  }
+
+  .card.p-3 {
+    padding: 0.85rem !important;
+  }
+
+  .card.p-4 {
+    padding: 1rem !important;
+  }
+
+  .card-header {
+    padding: 0.75rem 0.85rem;
+    font-size: 0.9rem;
+  }
+
+  /* Stat cards on small phones */
+  .ccms-stat-card {
+    padding: 0.85rem 0.75rem;
+  }
+
+  .ccms-stat-card .stat-value {
+    font-size: 1.45rem;
+  }
+
+  .ccms-stat-card i.fs-4 {
+    font-size: 1.25rem !important;
+  }
+
+  /* Toast notification position on phones */
+  #toastContainer {
+    top: 60px !important;
+    left: 10px !important;
+    right: 10px !important;
+    width: auto !important;
+    max-width: calc(100vw - 20px) !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+
+  .ccms-toast {
+    width: 100% !important;
+  }
+
+  /* Receipt box padding */
+  .receipt-box {
+    padding: 1rem;
+  }
+
+  /* Compact buttons on small phones */
+  .btn {
+    font-size: 0.82rem;
+    padding: 0.45rem 0.75rem;
+  }
 }
 

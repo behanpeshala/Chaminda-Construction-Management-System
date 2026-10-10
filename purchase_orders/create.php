@@ -69,24 +69,26 @@ require_once __DIR__ . '/../includes/page_start.php';
     </div>
 
     <label class="form-label required">Material Lines</label>
-    <table class="table table-sm" id="lineTable">
-      <thead><tr><th>Material</th><th style="width:110px">Qty</th><th style="width:140px">Unit Price</th><th></th></tr></thead>
-      <tbody id="lineBody">
-        <tr>
-          <td>
-            <select name="material_id[]" class="form-select form-select-sm mat-select">
-              <option value="">-- Select --</option>
-              <?php foreach ($materials as $m): ?>
-                <option value="<?php echo $m['material_id']; ?>" data-price="<?php echo $m['unit_price']; ?>"><?php echo htmlspecialchars($m['name']); ?> (<?php echo htmlspecialchars($m['unit']); ?>)</option>
-              <?php endforeach; ?>
-            </select>
-          </td>
-          <td><input type="number" min="1" name="quantity[]" class="form-control form-control-sm"></td>
-          <td><input type="number" step="0.01" min="0" name="unit_price[]" class="form-control form-control-sm price-input"></td>
-          <td><button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="bi bi-trash"></i></button></td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="table-responsive mb-2">
+      <table class="table table-sm" id="lineTable">
+        <thead><tr><th>Material</th><th style="width:110px">Qty</th><th style="width:140px">Unit Price</th><th></th></tr></thead>
+        <tbody id="lineBody">
+          <tr>
+            <td>
+              <select name="material_id[]" class="form-select form-select-sm mat-select">
+                <option value="">-- Select --</option>
+                <?php foreach ($materials as $m): ?>
+                  <option value="<?php echo $m['material_id']; ?>" data-price="<?php echo $m['unit_price']; ?>"><?php echo htmlspecialchars($m['name']); ?> (<?php echo htmlspecialchars($m['unit']); ?>)</option>
+                <?php endforeach; ?>
+              </select>
+            </td>
+            <td><input type="number" min="1" name="quantity[]" class="form-control form-control-sm"></td>
+            <td><input type="number" step="0.01" min="0" name="unit_price[]" class="form-control form-control-sm price-input"></td>
+            <td><button type="button" class="btn btn-sm btn-outline-danger remove-row"><i class="bi bi-trash"></i></button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
     <button type="button" id="addRow" class="btn btn-sm btn-outline-secondary mb-3"><i class="bi bi-plus-lg"></i> Add Line</button>
 
     <div>

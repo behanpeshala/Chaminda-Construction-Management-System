@@ -5,7 +5,7 @@ require_once __DIR__ . '/header.php';
 <div class="ccms-layout">
   <?php require_once __DIR__ . '/sidebar.php'; ?>
   <div class="ccms-main">
-    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap">
+    <div class="d-flex justify-content-between align-items-center mb-3 flex-wrap gap-2">
       <h4 class="mb-0 fw-bold text-light"><?php echo htmlspecialchars($page_title ?? ''); ?></h4>
       <?php if (!empty($page_actions)) echo $page_actions; ?>
     </div>

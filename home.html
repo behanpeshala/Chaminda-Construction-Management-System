@@ -1058,24 +1058,137 @@
     gap: 16px;
   }
 
-  /* ---------- RESPONSIVE MEDIA QUERIES ---------- */
+  /* ---------- RESPONSIVE MEDIA QUERIES & MOBILE DRAWER ---------- */
+  .mobile-nav-backdrop {
+    display: none;
+    position: fixed;
+    top: 0; left: 0; right: 0; bottom: 0;
+    background: rgba(5, 14, 23, 0.85);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    z-index: 998;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+  .mobile-nav-backdrop.open {
+    display: block;
+    opacity: 1;
+  }
+
+  .contact-grid {
+    display: grid;
+    grid-template-columns: 1fr 1.3fr;
+    gap: 40px;
+    align-items: start;
+  }
+  .contact-info-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-glow);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.5);
+  }
+  .contact-form-card {
+    background: var(--bg-card);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-lg);
+    padding: 40px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+  }
+  .contact-form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+  }
+
   @media (max-width: 1024px) {
-    .hero-grid, .about-grid, .ccms-wrapper, .calc-grid {
+    .hero-grid, .about-grid, .ccms-wrapper, .calc-grid, .contact-grid {
       grid-template-columns: 1fr;
     }
     .metrics-grid { grid-template-columns: repeat(2, 1fr); }
     .services-grid, .projects-grid, .testimonials-grid { grid-template-columns: repeat(2, 1fr); }
     .footer-grid { grid-template-columns: 1fr 1fr; }
+    .hero-content h1 { font-size: clamp(2.3rem, 5vw, 3.8rem); }
   }
 
   @media (max-width: 768px) {
-    nav.main-nav { display: none; }
-    .mobile-menu-btn { display: block; }
+    nav.main-nav {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      position: fixed;
+      top: 0;
+      right: -320px;
+      width: min(300px, 85vw);
+      height: 100vh;
+      background: #06111e;
+      border-left: 1px solid var(--border-glow);
+      padding: 85px 28px 40px;
+      gap: 16px;
+      z-index: 999;
+      box-shadow: -10px 0 40px rgba(0,0,0,0.85);
+      transition: right 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+      overflow-y: auto;
+    }
+    nav.main-nav.open {
+      right: 0;
+    }
+    nav.main-nav a {
+      font-size: 1.05rem;
+      width: 100%;
+      padding: 10px 0;
+      border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+    }
+    .mobile-menu-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 42px;
+      height: 42px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--border-light);
+      border-radius: var(--radius-md);
+      color: #FFF;
+      font-size: 1.3rem;
+      cursor: pointer;
+      z-index: 1001;
+      transition: var(--transition);
+    }
+    .mobile-menu-btn:hover {
+      background: rgba(16, 185, 129, 0.15);
+      border-color: var(--amber);
+      color: var(--amber);
+    }
+
+    .hero-content h1 { font-size: clamp(2rem, 8vw, 3.2rem); margin: 16px 0 20px; }
+    .hero-subtitle { font-size: 1rem; margin-bottom: 24px; }
+    .hero-trust-bar { flex-wrap: wrap; gap: 14px 18px; padding-top: 18px; }
+    .visual-card { height: 280px; }
+    
     .metrics-grid, .services-grid, .projects-grid, .testimonials-grid { grid-template-columns: 1fr; }
-    .footer-grid { grid-template-columns: 1fr; }
+    .footer-grid { grid-template-columns: 1fr; gap: 36px; }
     .mock-content { grid-template-columns: 1fr; }
     .mock-sidebar { display: none; }
-    .calc-box { padding: 24px; }
+    
+    .calc-box { padding: 24px 18px; }
+    .contact-info-card, .contact-form-card { padding: 24px 18px; }
+    .contact-form-row { grid-template-columns: 1fr; gap: 0; }
+
+    .cta-flex { flex-direction: column; align-items: flex-start; gap: 20px; }
+    .cta-text h2 { font-size: 1.85rem; }
+    .cta-section { padding: 48px 20px; margin: 30px 0 60px; }
+  }
+
+  @media (max-width: 480px) {
+    .brand-logo { gap: 10px; }
+    .logo-icon { width: 38px; height: 38px; }
+    .brand-text h2 { font-size: 1.05rem; }
+    .brand-text span { font-size: 0.55rem; }
+    .nav-right { gap: 10px; }
+    .nav-right .btn-amber { padding: 8px 12px; font-size: 0.78rem; gap: 6px; }
+    .nav-right .btn-amber svg { display: none; }
+    .hero-actions .btn { width: 100%; }
+    .calc-result-panel .est-price { font-size: 1.9rem; }
   }
 
   /* ---------- FLOATING WHATSAPP BUTTON ---------- */
@@ -1160,6 +1273,9 @@
     </div>
   </div>
 </header>
+
+<!-- Mobile Navigation Drawer Backdrop -->
+<div class="mobile-nav-backdrop" id="mobileNavBackdrop"></div>
 
 <!-- ============ HERO SECTION ============ -->
 <section class="hero-section" id="top">
@@ -1709,10 +1825,10 @@
       <p>Have a project inquiry or request? Fill out the form below or email us directly at <strong>chamindaconstruction@gmail.com</strong>.</p>
     </div>
 
-    <div style="display: grid; grid-template-columns: 1fr 1.3fr; gap: 40px; align-items: start;">
+    <div class="contact-grid">
       
       <!-- Contact Info Card -->
-      <div style="background: var(--bg-card); border: 1px solid var(--border-glow); border-radius: var(--radius-lg); padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.5);">
+      <div class="contact-info-card">
         <h3 style="font-size: 1.6rem; color: #FFF; margin-bottom: 20px; font-weight: 800;">Direct Contact Info</h3>
         <p style="color: var(--text-secondary); margin-bottom: 30px; line-height: 1.7;">
           Reach out directly to our engineering team or send your project specifications.
@@ -1759,14 +1875,14 @@
       </div>
 
       <!-- Contact Email Form -->
-      <div style="background: var(--bg-card); border: 1px solid var(--border-light); border-radius: var(--radius-lg); padding: 40px; box-shadow: 0 20px 40px rgba(0,0,0,0.4);">
+      <div class="contact-form-card">
         <h3 style="font-size: 1.6rem; color: #FFF; margin-bottom: 8px; font-weight: 800;">Send Us A Direct Email</h3>
         <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.95rem;">
           Your inquiry will be sent straight to <strong>behanpeshala@gmail.com</strong>.
         </p>
 
         <form id="contactEmailForm" onsubmit="handleContactSubmit(event)">
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="contact-form-row">
             <div class="form-group">
               <label for="contactName">YOUR NAME *</label>
               <input type="text" id="contactName" name="name" class="form-control" placeholder="John Doe" required>
@@ -1777,7 +1893,7 @@
             </div>
           </div>
 
-          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+          <div class="contact-form-row">
             <div class="form-group">
               <label for="contactPhone">PHONE NUMBER</label>
               <input type="tel" id="contactPhone" name="phone" class="form-control" placeholder="+94 7X XXX XXXX">
@@ -1872,21 +1988,53 @@
     }
   });
 
-  // Mobile menu toggle
+  // Mobile menu toggle & drawer controller
   const mobileMenuBtn = document.getElementById('mobileMenuBtn');
   const mainNav = document.getElementById('mainNav');
-  mobileMenuBtn.addEventListener('click', () => {
-    const isOpen = mainNav.style.display === 'flex';
-    mainNav.style.display = isOpen ? 'none' : 'flex';
-    if (!isOpen) {
-      mainNav.style.flexDirection = 'column';
-      mainNav.style.position = 'absolute';
-      mainNav.style.top = '70px';
-      mainNav.style.left = '0';
-      mainNav.style.right = '0';
-      mainNav.style.background = 'var(--bg-dark)';
-      mainNav.style.padding = '24px';
-      mainNav.style.borderBottom = '1px solid var(--border-light)';
+  const mobileNavBackdrop = document.getElementById('mobileNavBackdrop');
+
+  function openMobileNav() {
+    mainNav.classList.add('open');
+    if (mobileNavBackdrop) mobileNavBackdrop.classList.add('open');
+    mobileMenuBtn.textContent = '✕';
+    mobileMenuBtn.setAttribute('aria-expanded', 'true');
+    document.body.style.overflow = 'hidden';
+  }
+
+  function closeMobileNav() {
+    mainNav.classList.remove('open');
+    if (mobileNavBackdrop) mobileNavBackdrop.classList.remove('open');
+    mobileMenuBtn.textContent = '☰';
+    mobileMenuBtn.setAttribute('aria-expanded', 'false');
+    document.body.style.overflow = '';
+  }
+
+  mobileMenuBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    if (mainNav.classList.contains('open')) {
+      closeMobileNav();
+    } else {
+      openMobileNav();
+    }
+  });
+
+  if (mobileNavBackdrop) {
+    mobileNavBackdrop.addEventListener('click', closeMobileNav);
+  }
+
+  // Auto-close drawer when clicking any nav anchor on mobile
+  mainNav.querySelectorAll('a').forEach(link => {
+    link.addEventListener('click', () => {
+      if (window.innerWidth <= 768) {
+        closeMobileNav();
+      }
+    });
+  });
+
+  // Close on Escape key
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && mainNav.classList.contains('open')) {
+      closeMobileNav();
     }
   });
 

@@ -5,7 +5,20 @@ function nav_active($dir_or_file, $current_script) {
     return (strpos($current_script, $dir_or_file) !== false) ? 'active' : '';
 }
 ?>
-<div class="ccms-sidebar">
+<div class="ccms-sidebar" id="ccmsSidebar">
+  <!-- Mobile Drawer Header -->
+  <div class="d-flex d-lg-none align-items-center justify-content-between pb-3 mb-2 border-bottom border-secondary border-opacity-25 px-1">
+    <div class="d-flex align-items-center gap-2">
+      <img src="/ccms/assets/images/logo.png" alt="CCMS Logo" style="height: 28px; width: 28px; object-fit: contain; background: #ffffff; padding: 2px; border-radius: 6px; border: 1px solid #10B981;">
+      <div>
+        <div class="fw-bold text-light small" style="line-height:1.2;">CCMS Portal</div>
+        <div class="text-secondary" style="font-size:0.7rem;"><?php echo htmlspecialchars($role); ?></div>
+      </div>
+    </div>
+    <button type="button" class="btn btn-sm btn-outline-secondary rounded-circle d-flex align-items-center justify-content-center p-0" id="sidebarCloseBtn" style="width: 32px; height: 32px;" aria-label="Close menu">
+      <i class="bi bi-x-lg text-light"></i>
+    </button>
+  </div>
   <ul class="nav flex-column">
 
     <li class="nav-item">

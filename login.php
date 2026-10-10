@@ -64,8 +64,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 <link href="/ccms/assets/css/style.css" rel="stylesheet">
 </head>
-<body class="ccms-auth-wrapper">
-  <div class="card ccms-auth-card">
+<body class="ccms-auth-wrapper px-3 py-4">
+  <div class="card ccms-auth-card my-auto">
     <div class="card-body p-4 p-md-5">
       <div class="text-center mb-4">
         <img src="/ccms/assets/images/logo.png" alt="CCMS Logo" style="height: 70px; width: auto; object-fit: contain; background: #ffffff; padding: 6px; border-radius: 12px; border: 1.5px solid #10B981; margin-bottom: 8px; box-shadow: 0 4px 15px rgba(16,185,129,0.2);">

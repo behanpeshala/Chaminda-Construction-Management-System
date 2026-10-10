@@ -114,7 +114,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
 <link href="/ccms/assets/css/style.css" rel="stylesheet">
 </head>
-<body class="ccms-auth-wrapper py-4">
+<body class="ccms-auth-wrapper py-4 px-3">
   <div class="card ccms-auth-card my-auto" style="max-width: 600px;">
     <div class="card-body p-4 p-md-5">
       <div class="text-center mb-4">
