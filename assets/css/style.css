@@ -643,6 +643,19 @@ a.text-muted:hover, .text-muted a:hover {
   border-radius: 0.85rem;
   box-shadow: 0 0 40px rgba(6, 182, 212, 0.3);
   background: #0f172a;
+  transition: border-color 0.3s ease, box-shadow 0.3s ease;
+}
+
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  15%, 45%, 75% { transform: translateX(-8px); }
+  30%, 60%, 90% { transform: translateX(8px); }
+}
+
+.shake-animation {
+  animation: shake 0.5s ease-in-out;
+  border-color: var(--neon-rose) !important;
+  box-shadow: 0 0 35px rgba(244, 63, 94, 0.45) !important;
 }
 
 .progress {

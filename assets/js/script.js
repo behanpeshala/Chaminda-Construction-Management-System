@@ -16,8 +16,8 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   });
 
-  // Auto-dismiss standard alerts after 6s
-  document.querySelectorAll('.alert').forEach(function (a) {
+  // Auto-dismiss standard alerts after 6s (except persistent auth/error alerts)
+  document.querySelectorAll('.alert:not(.alert-permanent)').forEach(function (a) {
     setTimeout(function () {
       var alert = bootstrap.Alert.getOrCreateInstance(a);
       if (alert) alert.close();
