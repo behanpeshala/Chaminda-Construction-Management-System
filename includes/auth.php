@@ -77,7 +77,47 @@ function validate_sri_lankan_nic(?string $nic): bool {
     if ($nic === null) return false;
     $nic = strtoupper(trim($nic));
     if ($nic === '') return false;
-    return (bool)preg_match('/^([0-9]{9}[VX]|[0-9]{12})$/', $nic);
+    if (!preg_match('/^([0-9]{9}[VX]|[0-9]{12})$/', $nic)) {
+        return false;
+    }
+    // Validate day of year range (1-366 for male, 501-866 for female)
+    $days = (strlen($nic) === 10) ? (int)substr($nic, 2, 3) : (int)substr($nic, 4, 3);
+    if ($days > 500) {
+        $days -= 500;
+    }
+    return ($days >= 1 && $days <= 366);
+}
+
+/**
+ * Sri Lankan & International Phone Validation Helper
+ * Accepts:
+ *  - Sri Lankan 10 digits starting with 0 (e.g. 0712345678, 0112345678)
+ *  - Sri Lankan international format (+94712345678, 94712345678)
+ *  - General valid international format with + (e.g. +12025550192)
+ */
+function validate_phone_number(?string $phone): bool {
+    if ($phone === null) return false;
+    $clean = preg_replace('/[\s\-\(\)\.]/', '', trim($phone));
+    if ($clean === '') return false;
+    return (bool)preg_match('/^(?:0[0-9]{9}|\+94[0-9]{9}|94[0-9]{9}|\+[1-9][0-9]{8,14})$/', $clean);
+}
+
+/**
+ * Normalize phone number (removes spaces, hyphens, brackets)
+ */
+function normalize_phone_number(?string $phone): string {
+    if ($phone === null) return '';
+    return preg_replace('/[\s\-\(\)\.]/', '', trim($phone));
+}
+
+/**
+ * Validates Email Address with strict format check
+ */
+function validate_email(?string $email): bool {
+    if ($email === null) return false;
+    $email = trim($email);
+    if ($email === '') return false;
+    return (bool)filter_var($email, FILTER_VALIDATE_EMAIL) && (bool)preg_match('/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/', $email);
 }
 
 /**

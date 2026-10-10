@@ -318,7 +318,7 @@ document.addEventListener('DOMContentLoaded', function () {
       setFieldError(field, 'Please enter a valid email address (e.g. name@example.com).');
       return false;
     }
-    clearFieldError(field);
+    setFieldValid(field, '✓ Valid email address');
     return true;
   }
 
@@ -332,12 +332,16 @@ document.addEventListener('DOMContentLoaded', function () {
       clearFieldError(field);
       return true;
     }
-    var digitsOnly = val.replace(/\D/g, '');
-    if (!phoneRegex.test(val) || digitsOnly.length < 9 || digitsOnly.length > 15) {
-      setFieldError(field, 'Please enter a valid phone number (9-15 digits, e.g. 0771234567 or +94771234567).');
+    var clean = val.replace(/[\s\-\(\)\.]/g, '');
+    var lkLocalRegex = /^0[0-9]{9}$/;
+    var lkIntlRegex = /^(?:\+94|94)[0-9]{9}$/;
+    var intlRegex = /^\+[1-9][0-9]{8,14}$/;
+
+    if (!lkLocalRegex.test(clean) && !lkIntlRegex.test(clean) && !intlRegex.test(clean)) {
+      setFieldError(field, 'Please enter a valid phone number (e.g. 0712345678 or +94712345678).');
       return false;
     }
-    clearFieldError(field);
+    setFieldValid(field, '✓ Valid phone number');
     return true;
   }
 
@@ -358,7 +362,7 @@ document.addEventListener('DOMContentLoaded', function () {
     var isNew = newNicRegex.test(val);
 
     if (!isOld && !isNew) {
-      setFieldError(field, 'Invalid Sri Lankan NIC. Must be 9 digits followed by V/X (Old) or 12 digits (New). E.g. 951234567V or 199512345678.');
+      setFieldError(field, 'Invalid Sri Lankan NIC. Must be 9 digits + V/X (Old) or 12 digits (New). E.g. 951234567V or 199512345678.');
       return false;
     }
 
@@ -384,8 +388,29 @@ document.addEventListener('DOMContentLoaded', function () {
       return false;
     }
 
-    var formatName = isOld ? 'Old Format (9 Digits + V/X)' : 'New Format (12 Digits)';
+    var formatName = isOld ? 'Old (9 Digits + V/X)' : 'New (12 Digits)';
     setFieldValid(field, `✓ Valid Sri Lankan NIC [${formatName}] - Gender: ${gender}`);
+
+    // Optionally auto-populate gender and date of birth if fields exist and are empty
+    var form = field.closest('form');
+    if (form) {
+      var genderField = form.querySelector('select[name="gender"]');
+      if (genderField && (!genderField.value || genderField.value === '')) {
+        genderField.value = gender;
+        genderField.dispatchEvent(new Event('change'));
+      }
+      var dobField = form.querySelector('input[name="date_of_birth"]');
+      if (dobField && !dobField.value) {
+        var startYearDate = new Date(parseInt(year, 10), 0, 1);
+        var dobDate = new Date(startYearDate.getTime() + (days - 1) * 86400000);
+        var yyyy = dobDate.getFullYear();
+        var mm = String(dobDate.getMonth() + 1).padStart(2, '0');
+        var dd = String(dobDate.getDate()).padStart(2, '0');
+        dobField.value = `${yyyy}-${mm}-${dd}`;
+        dobField.dispatchEvent(new Event('change'));
+      }
+    }
+
     return true;
   }
 

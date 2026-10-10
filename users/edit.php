@@ -23,11 +23,17 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $newpass       = $_POST['password'] ?? '';
 
     if ($full_name === '') $errors[] = 'Full name is required.';
-    if (!filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'A valid email is required.';
+    if ($email === '') {
+        $errors[] = 'Email address is required.';
+    } elseif (!validate_email($email)) {
+        $errors[] = 'Please enter a valid email address (e.g. name@example.com).';
+    }
 
     // Phone Validation
-    if ($phone !== '' && !preg_match('/^0[0-9]{9}$/', $phone)) {
-        $errors[] = 'Phone number must be exactly 10 digits starting with 0 (e.g. 0712345678).';
+    if ($phone === '') {
+        $errors[] = 'Phone number is required.';
+    } elseif (!validate_phone_number($phone)) {
+        $errors[] = 'Please enter a valid phone number (e.g. 0712345678 or +94712345678).';
     }
 
     // NIC Validation
@@ -110,11 +116,9 @@ require_once __DIR__ . '/../includes/page_start.php';
 
     <div class="row g-2 mb-3">
       <div class="col-md-6">
-        <label class="form-label">Phone Number</label>
-        <input type="text" inputmode="numeric" name="phone" class="form-control" maxlength="10"
-               pattern="0[0-9]{9}" title="Please enter a 10-digit phone number starting with 0 (e.g. 0712345678)"
-               oninput="this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);"
-               value="<?php echo htmlspecialchars($_POST['phone'] ?? $user['phone'] ?? ''); ?>" placeholder="07xxxxxxxx">
+        <label class="form-label required">Phone Number</label>
+        <input type="tel" name="phone" class="form-control" required maxlength="15"
+               value="<?php echo htmlspecialchars($_POST['phone'] ?? $user['phone'] ?? ''); ?>" placeholder="e.g. 0712345678 or +94712345678">
       </div>
       <div class="col-md-6">
         <label class="form-label required">NIC Number</label>
