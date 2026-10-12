@@ -52,11 +52,15 @@ try {
         echo "Added status column.\n";
     }
 
-    // 3. Employees table nic_number column
+    // 3. Employees table columns
     $empCols = $pdo->query("SHOW COLUMNS FROM employees")->fetchAll(PDO::FETCH_COLUMN);
     if (!in_array('nic_number', $empCols)) {
         $pdo->exec("ALTER TABLE employees ADD COLUMN nic_number VARCHAR(20) NULL AFTER full_name");
         echo "Added nic_number column to employees.\n";
+    }
+    if (!in_array('address', $empCols)) {
+        $pdo->exec("ALTER TABLE employees ADD COLUMN address TEXT NULL AFTER email");
+        echo "Added address column to employees.\n";
     }
 
     // 4. Contact Messages table

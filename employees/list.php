@@ -6,9 +6,9 @@ $page_actions = '<a href="/ccms/employees/create.php" class="btn btn-success"><i
 
 $search = trim($_GET['q'] ?? '');
 if ($search !== '') {
-    $stmt = $pdo->prepare("SELECT * FROM employees WHERE full_name LIKE ? OR nic_number LIKE ? OR role_title LIKE ? OR phone LIKE ? OR email LIKE ? ORDER BY created_at DESC");
+    $stmt = $pdo->prepare("SELECT * FROM employees WHERE full_name LIKE ? OR nic_number LIKE ? OR role_title LIKE ? OR phone LIKE ? OR email LIKE ? OR address LIKE ? ORDER BY created_at DESC");
     $term = "%$search%";
-    $stmt->execute([$term, $term, $term, $term, $term]);
+    $stmt->execute([$term, $term, $term, $term, $term, $term]);
     $employees = $stmt->fetchAll();
 } else {
     $employees = $pdo->query("SELECT * FROM employees ORDER BY created_at DESC")->fetchAll();
@@ -19,15 +19,15 @@ require_once __DIR__ . '/../includes/page_start.php';
 <div class="card p-3">
   <form class="row g-2 mb-3" method="get">
     <div class="col-md-4">
-      <input type="text" name="q" class="form-control" placeholder="Search by name, NIC, role, email or phone" value="<?php echo htmlspecialchars($search); ?>" oninput="filterTable(this.value)">
+      <input type="text" name="q" class="form-control" placeholder="Search by name, NIC, role, email, phone or address" value="<?php echo htmlspecialchars($search); ?>" oninput="filterTable(this.value)">
     </div>
     <div class="col-auto"><button class="btn btn-outline-secondary"><i class="bi bi-search"></i> Search</button></div>
   </form>
   <div class="table-responsive">
   <table class="table table-hover align-middle">
-    <thead><tr><th>Name</th><th>NIC</th><th>Role</th><th>Phone</th><th>Email</th><th>Status</th><th>Actions</th></tr></thead>
+    <thead><tr><th>Name</th><th>NIC</th><th>Role</th><th>Phone</th><th>Email</th><th>Address</th><th>Status</th><th>Actions</th></tr></thead>
     <tbody>
-    <?php if (!$employees): ?><tr><td colspan="7" class="text-center text-muted py-4">No employees found.</td></tr><?php endif; ?>
+    <?php if (!$employees): ?><tr><td colspan="8" class="text-center text-muted py-4">No employees found.</td></tr><?php endif; ?>
     <?php foreach ($employees as $e): ?>
       <tr>
         <td class="fw-semibold text-light"><?php echo htmlspecialchars($e['full_name']); ?></td>
@@ -35,6 +35,7 @@ require_once __DIR__ . '/../includes/page_start.php';
         <td><?php echo htmlspecialchars($e['role_title'] ?? '-'); ?></td>
         <td><?php echo htmlspecialchars($e['phone'] ?? '-'); ?></td>
         <td><?php echo htmlspecialchars($e['email'] ?? '-'); ?></td>
+        <td><?php echo htmlspecialchars($e['address'] ?? '-'); ?></td>
         <td><?php echo $e['status']==='active' ? '<span class="badge bg-success">Active</span>' : '<span class="badge bg-danger">Inactive</span>'; ?></td>
         <td>
           <a href="/ccms/employees/edit.php?id=<?php echo $e['employee_id']; ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>

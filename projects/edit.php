@@ -8,8 +8,13 @@ $stmt = $pdo->prepare("SELECT * FROM projects WHERE project_id=?"); $stmt->execu
 $project = $stmt->fetch();
 if (!$project) { set_flash('danger','Project not found.'); redirect('/ccms/projects/list.php'); }
 
-$clients  = $pdo->query("SELECT client_id, name FROM clients ORDER BY name")->fetchAll();
-$managers = $pdo->query("SELECT user_id, full_name FROM users WHERE role='Project Manager' AND status='active' ORDER BY full_name")->fetchAll();
+$clients   = $pdo->query("SELECT client_id, name FROM clients ORDER BY name")->fetchAll();
+$managers  = $pdo->query("SELECT user_id, full_name FROM users WHERE role='Project Manager' AND status='active' ORDER BY full_name")->fetchAll();
+$employees = $pdo->query("SELECT employee_id, full_name, role_title, status FROM employees WHERE status='active' OR employee_id IN (SELECT employee_id FROM project_employees WHERE project_id=" . (int)$id . ") ORDER BY full_name")->fetchAll();
+
+$assigned_stmt = $pdo->prepare("SELECT employee_id FROM project_employees WHERE project_id=?");
+$assigned_stmt->execute([$id]);
+$assigned_ids = $assigned_stmt->fetchAll(PDO::FETCH_COLUMN);
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
@@ -23,14 +28,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $budget = $_POST['estimated_budget'] ?? '';
     $pm = (int)($_POST['project_manager_id'] ?? 0);
     $status = $_POST['status'] ?? '';
+    $assigned = $_POST['employee_ids'] ?? [];
 
     if ($name === '') $errors[] = 'Project name is required.';
     if (strtotime($end) <= strtotime($start)) $errors[] = 'Expected end date must be later than the start date.';
     if (!is_numeric($budget) || (float)$budget <= 0) $errors[] = 'Estimated budget must be a positive value.';
 
     if (!$errors) {
+        $pdo->beginTransaction();
         $pdo->prepare("UPDATE projects SET project_name=?, client_id=?, project_type=?, location=?, start_date=?, end_date=?, estimated_budget=?, project_manager_id=?, status=? WHERE project_id=?")
             ->execute([$name,$client_id,$type,$location,$start,$end,$budget,$pm,$status,$id]);
+
+        $pdo->prepare("DELETE FROM project_employees WHERE project_id=?")->execute([$id]);
+        $pe_stmt = $pdo->prepare("INSERT IGNORE INTO project_employees (project_id, employee_id) VALUES (?,?)");
+        foreach ($assigned as $eid) {
+            $pe_stmt->execute([$id, (int)$eid]);
+        }
+        $pdo->commit();
+
         audit($pdo,'UPDATE','projects',$id);
         set_flash('success','Project updated.');
         redirect('/ccms/projects/view.php?id='.$id);
@@ -95,6 +110,28 @@ require_once __DIR__ . '/../includes/page_start.php';
             <option value="<?php echo $s; ?>" <?php echo $project['status']===$s?'selected':''; ?>><?php echo $s; ?></option>
           <?php endforeach; ?>
         </select>
+      </div>
+
+      <div class="col-12">
+        <label class="form-label">Assign Employees</label>
+        <div class="border rounded p-2" style="max-height:180px;overflow-y:auto">
+          <?php if (!$employees): ?><p class="text-muted small mb-0">No employees registered yet.</p><?php endif; ?>
+          <?php 
+          $current_assigned = $_SERVER['REQUEST_METHOD'] === 'POST' ? ($_POST['employee_ids'] ?? []) : $assigned_ids;
+          foreach ($employees as $e): 
+            $isChecked = in_array((string)$e['employee_id'], array_map('strval', $current_assigned));
+          ?>
+            <div class="form-check">
+              <input class="form-check-input" type="checkbox" name="employee_ids[]" value="<?php echo $e['employee_id']; ?>" id="emp<?php echo $e['employee_id']; ?>" <?php echo $isChecked ? 'checked' : ''; ?>>
+              <label class="form-check-label" for="emp<?php echo $e['employee_id']; ?>">
+                <?php echo htmlspecialchars($e['full_name']); ?> <small class="text-muted"><?php echo htmlspecialchars($e['role_title']); ?></small>
+                <?php if (isset($e['status']) && $e['status'] === 'inactive'): ?>
+                  <span class="badge bg-secondary ms-1">Inactive</span>
+                <?php endif; ?>
+              </label>
+            </div>
+          <?php endforeach; ?>
+        </div>
       </div>
     </div>
     <div class="mt-4">

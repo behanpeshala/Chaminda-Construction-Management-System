@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $role_title = trim($_POST['role_title'] ?? '');
     $phone      = trim($_POST['phone'] ?? '');
     $email      = trim($_POST['email'] ?? '');
+    $address    = trim($_POST['address'] ?? '');
 
     if ($name === '') $errors[] = 'Employee name is required.';
     
@@ -56,9 +57,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         }
     }
 
+    // Address Validation (Required)
+    if ($address === '') {
+        $errors[] = 'Address is required.';
+    }
+
     if (!$errors) {
-        $pdo->prepare("UPDATE employees SET full_name=?, nic_number=?, role_title=?, phone=?, email=? WHERE employee_id=?")
-            ->execute([$name, $nic_number !== '' ? $nic_number : null, $role_title, $phone, $email, $id]);
+        $pdo->prepare("UPDATE employees SET full_name=?, nic_number=?, role_title=?, phone=?, email=?, address=? WHERE employee_id=?")
+            ->execute([$name, $nic_number !== '' ? $nic_number : null, $role_title, $phone, $email, $address, $id]);
         
         audit($pdo, 'UPDATE', 'employees', $id);
 
@@ -105,6 +111,11 @@ require_once __DIR__ . '/../includes/page_start.php';
         <label class="form-label required">Email</label>
         <input type="email" name="email" class="form-control" placeholder="employee@example.com" required value="<?php echo htmlspecialchars($_POST['email'] ?? $emp['email']); ?>">
       </div>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label required">Address</label>
+      <textarea name="address" class="form-control" rows="2" placeholder="e.g. No. 45, Temple Road, Colombo" required><?php echo htmlspecialchars($_POST['address'] ?? $emp['address'] ?? ''); ?></textarea>
     </div>
 
     <button class="btn btn-success"><i class="bi bi-check-lg"></i> Save Changes</button>

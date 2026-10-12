@@ -40,6 +40,7 @@ CREATE TABLE employees (
     role_title   VARCHAR(50),
     phone        VARCHAR(20),
     email        VARCHAR(100),
+    address      VARCHAR(255) NULL,
     status       ENUM('active','inactive') NOT NULL DEFAULT 'active',
     created_at   TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
