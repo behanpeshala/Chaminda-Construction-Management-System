@@ -333,14 +333,27 @@ document.addEventListener('DOMContentLoaded', function () {
       return true;
     }
     var clean = val.replace(/[\s\-\(\)\.]/g, '');
-    var lkLocalRegex = /^0[0-9]{9}$/;
-    var lkIntlRegex = /^(?:\+94|94)[0-9]{9}$/;
-    var intlRegex = /^\+[1-9][0-9]{8,14}$/;
 
-    if (!lkLocalRegex.test(clean) && !lkIntlRegex.test(clean) && !intlRegex.test(clean)) {
-      setFieldError(field, 'Please enter a valid phone number (e.g. 0712345678 or +94712345678).');
+    if (clean.startsWith('0')) {
+      if (!/^0[0-9]{9}$/.test(clean)) {
+        setFieldError(field, 'Phone number starting with 0 must have exactly 10 digits (e.g. 0712345678).');
+        return false;
+      }
+    } else if (clean.startsWith('+94')) {
+      if (!/^\+94[0-9]{9}$/.test(clean)) {
+        setFieldError(field, 'Phone number starting with +94 must have 11 digits (e.g. +94712345678).');
+        return false;
+      }
+    } else if (clean.startsWith('94')) {
+      if (!/^94[0-9]{9}$/.test(clean)) {
+        setFieldError(field, 'Phone number starting with 94 must have 11 digits (e.g. 94712345678).');
+        return false;
+      }
+    } else {
+      setFieldError(field, 'Phone number must start with 0 (10 digits) or +94 (11 digits).');
       return false;
     }
+
     setFieldValid(field, '✓ Valid phone number');
     return true;
   }

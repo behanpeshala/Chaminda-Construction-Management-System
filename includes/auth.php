@@ -89,17 +89,47 @@ function validate_sri_lankan_nic(?string $nic): bool {
 }
 
 /**
- * Sri Lankan & International Phone Validation Helper
- * Accepts:
- *  - Sri Lankan 10 digits starting with 0 (e.g. 0712345678, 0112345678)
- *  - Sri Lankan international format (+94712345678, 94712345678)
- *  - General valid international format with + (e.g. +12025550192)
+ * Sri Lankan Phone Validation Helper
+ * Requirements:
+ *  - Starting with 0: exactly 10 digits (e.g. 0712345678, 0112345678)
+ *  - Starting with +94: exactly 11 digits (e.g. +94712345678, where 94 + 9 digits = 11 digits)
+ *  - Starting with 94: exactly 11 digits (e.g. 94712345678)
  */
-function validate_phone_number(?string $phone): bool {
-    if ($phone === null) return false;
+function get_phone_validation_error(?string $phone): ?string {
+    if ($phone === null || trim($phone) === '') {
+        return 'Phone number is required.';
+    }
     $clean = preg_replace('/[\s\-\(\)\.]/', '', trim($phone));
-    if ($clean === '') return false;
-    return (bool)preg_match('/^(?:0[0-9]{9}|\+94[0-9]{9}|94[0-9]{9}|\+[1-9][0-9]{8,14})$/', $clean);
+    if ($clean === '') {
+        return 'Phone number is required.';
+    }
+
+    if (str_starts_with($clean, '0')) {
+        if (!preg_match('/^0[0-9]{9}$/', $clean)) {
+            return 'Phone number starting with 0 must have exactly 10 digits (e.g. 0712345678).';
+        }
+        return null;
+    }
+
+    if (str_starts_with($clean, '+94')) {
+        if (!preg_match('/^\+94[0-9]{9}$/', $clean)) {
+            return 'Phone number starting with +94 must have 11 digits (e.g. +94712345678).';
+        }
+        return null;
+    }
+
+    if (str_starts_with($clean, '94')) {
+        if (!preg_match('/^94[0-9]{9}$/', $clean)) {
+            return 'Phone number starting with 94 must have 11 digits (e.g. 94712345678).';
+        }
+        return null;
+    }
+
+    return 'Phone number must start with 0 (10 digits) or +94 (11 digits).';
+}
+
+function validate_phone_number(?string $phone): bool {
+    return get_phone_validation_error($phone) === null;
 }
 
 /**

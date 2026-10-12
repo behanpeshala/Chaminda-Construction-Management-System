@@ -103,4 +103,30 @@ require_once __DIR__ . '/../includes/page_start.php';
     </div>
   </form>
 </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const form = document.querySelector('form');
+  const startInput = document.querySelector('[name=start_date]');
+  const endInput = document.querySelector('[name=end_date]');
+
+  function updateEndDateConstraints() {
+    if (startInput.value) {
+      endInput.min = startInput.value;
+    }
+  }
+
+  startInput.addEventListener('change', updateEndDateConstraints);
+  startInput.addEventListener('input', updateEndDateConstraints);
+  updateEndDateConstraints();
+
+  form.addEventListener('submit', function(e){
+    const start = startInput.value;
+    const end = endInput.value;
+    if (start && end && end <= start) {
+      alert('Expected end date must be later than the start date.');
+      e.preventDefault();
+    }
+  });
+});
+</script>
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>

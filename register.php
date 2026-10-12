@@ -30,11 +30,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $errors[] = 'Please enter a valid email address (e.g. name@example.com).';
     }
 
-    // Phone Validation (Sri Lankan standard / international)
+    // Phone Validation (Sri Lankan standard)
     if ($phone === '') {
         $errors[] = 'Phone number is required.';
-    } elseif (!validate_phone_number($phone)) {
-        $errors[] = 'Please enter a valid phone number (e.g. 0712345678 or +94712345678).';
+    } elseif ($phoneErr = get_phone_validation_error($phone)) {
+        $errors[] = $phoneErr;
     }
 
     // NIC Validation
