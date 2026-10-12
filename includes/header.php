@@ -23,7 +23,7 @@
       </button>
       <a class="navbar-brand fw-bold d-flex align-items-center gap-2 me-1 me-sm-2" href="/ccms/dashboard.php">
         <img src="/ccms/assets/images/logo.png" alt="CCMS Logo" style="height: 30px; width: 30px; object-fit: contain; background: #ffffff; padding: 2px; border-radius: 6px; border: 1px solid #10B981;">
-        <span class="d-inline-flex align-items-center">CCMS <span class="badge bg-warning text-dark font-monospace ms-1 d-none d-sm-inline" style="font-size:0.65rem !important">PRO</span></span>
+        <span>CCMS</span>
       </a>
     </div>
     
