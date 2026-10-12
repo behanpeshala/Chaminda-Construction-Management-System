@@ -166,7 +166,7 @@ CREATE TABLE payments (
     notes            TEXT NULL,
     payment_type     ENUM('Client Payment','Supplier Payment','Other') NOT NULL,
     payment_date     DATE NOT NULL,
-    status           ENUM('Verified', 'Pending', 'Rejected') NOT NULL DEFAULT 'Verified',
+    status           ENUM('Approved', 'Verified', 'Pending', 'Rejected') NOT NULL DEFAULT 'Pending',
     recorded_by      INT NOT NULL,
     created_at       TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (project_id) REFERENCES projects(project_id),

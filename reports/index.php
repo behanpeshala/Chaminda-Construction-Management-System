@@ -28,7 +28,7 @@ require_once __DIR__ . '/../includes/page_start.php';
   </div>
   <?php endif; ?>
 
-  <?php if (in_array($role, ['Administrator','Finance Officer'])): ?>
+  <?php if (in_array($role, ['Administrator','Finance Officer','Project Manager','Client','Procurement Staff'])): ?>
   <div class="col-md-6 col-lg-3">
     <div class="card p-3 h-100">
       <h6><i class="bi bi-receipt"></i> Financial</h6>

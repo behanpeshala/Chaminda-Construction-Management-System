@@ -24,9 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($name === '') $errors[] = 'Project name is required.';
     if (!$client_id) $errors[] = 'Please select a client.';
     if (!in_array($type, ['Residential','Commercial','Infrastructure'], true)) $errors[] = 'Please select a project type.';
-    $today = date('Y-m-d');
     if (!$start || !$end) $errors[] = 'Start and expected end dates are required.';
-    elseif ($end < $today) $errors[] = 'Expected end date cannot be in the past (previous days cannot be selected).';
     elseif (strtotime($end) <= strtotime($start)) $errors[] = 'Expected end date must be later than the start date.';
     if (!is_numeric($budget) || (float)$budget <= 0) $errors[] = 'Estimated budget must be a positive value.';
     if (!$pm) $errors[] = 'Please assign a project manager.';
@@ -102,7 +100,7 @@ require_once __DIR__ . '/../includes/page_start.php';
       </div>
       <div class="col-md-4">
         <label class="form-label required">Expected End Date</label>
-        <input type="date" name="end_date" id="endDate" class="form-control" required min="<?php echo date('Y-m-d'); ?>" value="<?php echo htmlspecialchars($_POST['end_date'] ?? ''); ?>">
+        <input type="date" name="end_date" id="endDate" class="form-control" required value="<?php echo htmlspecialchars($_POST['end_date'] ?? ''); ?>">
       </div>
       <div class="col-md-4">
         <label class="form-label required">Estimated Budget (LKR)</label>
@@ -154,52 +152,34 @@ document.addEventListener('DOMContentLoaded', function() {
   const form = document.querySelector('form');
   const startInput = document.querySelector('[name=start_date]');
   const endInput = document.querySelector('[name=end_date]');
-  const today = '<?php echo date('Y-m-d'); ?>';
 
   function updateEndDateConstraints() {
-    let minDate = today;
-    if (startInput.value && startInput.value >= today) {
-      minDate = startInput.value;
-    }
-    endInput.min = minDate;
-    if (endInput.value && endInput.value < minDate) {
-      endInput.value = '';
+    if (startInput && startInput.value) {
+      endInput.min = startInput.value;
     }
   }
 
-  startInput.addEventListener('change', updateEndDateConstraints);
-  startInput.addEventListener('input', updateEndDateConstraints);
-  updateEndDateConstraints();
-
-  endInput.addEventListener('change', function() {
-    let minDate = today;
-    if (startInput.value && startInput.value >= today) {
-      minDate = startInput.value;
-    }
-    if (endInput.value && endInput.value < minDate) {
-      alert(startInput.value && startInput.value > today
-        ? 'Expected end date cannot be earlier than the start date.'
-        : 'Expected end date cannot be in the past.');
-      endInput.value = '';
-    }
-  });
+  if (startInput) {
+    startInput.addEventListener('change', updateEndDateConstraints);
+    startInput.addEventListener('input', updateEndDateConstraints);
+    updateEndDateConstraints();
+  }
 
   form.addEventListener('submit', function(e){
-    const start = startInput.value;
-    const end = endInput.value;
+    const start = startInput ? startInput.value : '';
+    const end = endInput ? endInput.value : '';
+
     if (!end) {
       alert('Expected end date is required.');
       e.preventDefault();
+      if (endInput) endInput.focus();
       return;
     }
-    if (end < today) {
-      alert('Expected end date cannot be in the past.');
-      e.preventDefault();
-      return;
-    }
+
     if (start && end <= start) {
       alert('Expected end date must be later than the start date.');
       e.preventDefault();
+      if (endInput) endInput.focus();
       return;
     }
   });

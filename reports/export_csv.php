@@ -42,7 +42,7 @@ switch ($type) {
     case 'financial':
         $rows = $pdo->query("SELECT p.project_name, COALESCE(b.allocated_amount,0),
                                      COALESCE((SELECT SUM(amount) FROM expenses e WHERE e.project_id=p.project_id),0),
-                                     COALESCE((SELECT SUM(amount) FROM payments pay WHERE pay.project_id=p.project_id),0)
+                                     COALESCE((SELECT SUM(amount) FROM payments pay WHERE pay.project_id=p.project_id AND pay.status IN ('Approved','Verified')),0)
                               FROM projects p LEFT JOIN budgets b ON b.project_id=p.project_id ORDER BY p.created_at DESC")->fetchAll(PDO::FETCH_NUM);
         csv_out('financial_report.csv',
             ['Project','Allocated Budget (LKR)','Total Expenses (LKR)','Total Payments (LKR)'], $rows);

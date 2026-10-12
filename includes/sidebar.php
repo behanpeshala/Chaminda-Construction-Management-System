@@ -75,16 +75,13 @@ function nav_active($dir_or_file, $current_script) {
     </li>
     <?php endif; ?>
 
-    <?php if (in_array($role, ['Administrator','Finance Officer','Project Manager'])): ?>
+    <?php if (in_array($role, ['Administrator','Finance Officer','Project Manager','Client','Procurement Staff'])): ?>
     <li class="nav-item">
       <a class="nav-link <?php echo nav_active('/finance/budgets.php',$current_script); ?>" href="/ccms/finance/budgets.php"><i class="bi bi-wallet2"></i> Budgets</a>
     </li>
     <li class="nav-item">
       <a class="nav-link <?php echo nav_active('/finance/expenses.php',$current_script); ?>" href="/ccms/finance/expenses.php"><i class="bi bi-receipt"></i> Expenses</a>
     </li>
-    <?php endif; ?>
-
-    <?php if (in_array($role, ['Administrator','Finance Officer','Project Manager','Client'])): ?>
     <li class="nav-item">
       <a class="nav-link <?php echo nav_active('/finance/payments.php',$current_script); ?>" href="/ccms/finance/payments.php"><i class="bi bi-credit-card"></i> Bank Payments</a>
     </li>

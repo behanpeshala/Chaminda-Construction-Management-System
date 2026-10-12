@@ -1,23 +1,92 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
-require_role(['Administrator','Finance Officer']);
+require_role(['Administrator','Finance Officer','Project Manager','Client','Procurement Staff']);
 $page_title = 'Bank Payments Management';
+$role = current_role();
+$userId = current_user_id();
 
-$projects = $pdo->query("SELECT project_id, project_name FROM projects ORDER BY project_name")->fetchAll();
+$canApprove = in_array($role, ['Administrator', 'Project Manager', 'Finance Officer'], true);
+
+// Fetch projects for form dropdown
+if ($role === 'Client') {
+    $pStmt = $pdo->prepare("SELECT p.project_id, p.project_name FROM projects p 
+                            JOIN clients c ON c.client_id=p.client_id 
+                            WHERE (c.email = (SELECT email FROM users WHERE user_id=?) OR c.nic_number = (SELECT nic_number FROM users WHERE user_id=?))
+                            ORDER BY p.project_name");
+    $pStmt->execute([$userId, $userId]);
+    $projects = $pStmt->fetchAll();
+    if (!$projects) {
+        $projects = $pdo->query("SELECT project_id, project_name FROM projects WHERE status != 'Completed' ORDER BY project_name")->fetchAll();
+    }
+} else {
+    $projects = $pdo->query("SELECT project_id, project_name FROM projects ORDER BY project_name")->fetchAll();
+}
 
 $errors = [];
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     csrf_check();
+
+    // 1. APPROVAL / REJECTION ACTION
+    $postAction = $_POST['action'] ?? '';
+    if (in_array($postAction, ['approve_payment', 'reject_payment'], true)) {
+        if (!$canApprove) {
+            set_flash('danger', 'Only Administrator, Project Manager, and Finance Officer can approve or reject payments.', 'Permission Denied');
+            redirect('/ccms/finance/payments.php');
+        }
+
+        $payment_id = (int)($_POST['payment_id'] ?? 0);
+        $payStmt = $pdo->prepare("SELECT pay.*, p.project_name FROM payments pay JOIN projects p ON p.project_id = pay.project_id WHERE pay.payment_id = ?");
+        $payStmt->execute([$payment_id]);
+        $targetPay = $payStmt->fetch();
+
+        if (!$targetPay) {
+            set_flash('danger', 'Payment record not found.', 'Error');
+            redirect('/ccms/finance/payments.php');
+        }
+
+        $newStatus = ($postAction === 'approve_payment') ? 'Approved' : 'Rejected';
+        $updateStmt = $pdo->prepare("UPDATE payments SET status = ? WHERE payment_id = ?");
+        $updateStmt->execute([$newStatus, $payment_id]);
+
+        audit($pdo, strtoupper($postAction), 'payments', $payment_id);
+
+        // Send notification to the user who recorded the payment
+        if (!empty($targetPay['recorded_by'])) {
+            $notifTitle = ($newStatus === 'Approved') ? 'Payment Approved' : 'Payment Rejected';
+            $notifMsg   = ($newStatus === 'Approved')
+                ? "Your payment of LKR " . number_format($targetPay['amount'], 2) . " for project '" . $targetPay['project_name'] . "' has been approved."
+                : "Your payment request of LKR " . number_format($targetPay['amount'], 2) . " for project '" . $targetPay['project_name'] . "' was rejected.";
+            $notifType  = ($newStatus === 'Approved') ? 'success' : 'danger';
+
+            $notifStmt = $pdo->prepare("INSERT INTO notifications (user_id, title, message, type, link, created_by) VALUES (?, ?, ?, ?, ?, ?)");
+            $notifStmt->execute([
+                $targetPay['recorded_by'],
+                $notifTitle,
+                $notifMsg,
+                $notifType,
+                '/ccms/finance/payments.php',
+                $userId
+            ]);
+        }
+
+        $flashMsg = ($newStatus === 'Approved')
+            ? "Payment #PAY-" . str_pad($payment_id, 4, '0', STR_PAD_LEFT) . " has been approved successfully."
+            : "Payment #PAY-" . str_pad($payment_id, 4, '0', STR_PAD_LEFT) . " has been rejected.";
+        set_flash(($newStatus === 'Approved' ? 'success' : 'warning'), $flashMsg, 'Payment ' . $newStatus);
+        redirect('/ccms/finance/payments.php');
+    }
+
+    // 2. RECORD / SUBMIT NEW PAYMENT
     $project_id      = (int)($_POST['project_id'] ?? 0);
     $amount          = $_POST['amount'] ?? 0;
-    $type            = $_POST['payment_type'] ?? '';
+    $type            = ($role === 'Client') ? 'Client Payment' : ($_POST['payment_type'] ?? 'Client Payment');
     $method          = $_POST['payment_method'] ?? 'Bank Transfer';
     $bank_name       = trim($_POST['bank_name'] ?? '');
     $account_number  = trim($_POST['account_number'] ?? '');
     $reference_number= trim($_POST['reference_number'] ?? '');
     $date            = $_POST['payment_date'] ?? date('Y-m-d');
     $notes           = trim($_POST['notes'] ?? '');
-    $status          = $_POST['status'] ?? 'Verified';
+    $status          = ($role === 'Client') ? 'Pending' : 'Approved';
 
     if (!$project_id) $errors[] = 'Please select a project.';
     if (!is_numeric($amount) || $amount <= 0) $errors[] = 'Amount must be a positive value.';
@@ -66,7 +135,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $type,
             $date,
             $status,
-            current_user_id()
+            $userId
         ]);
         
         $paymentId = (int)$pdo->lastInsertId();
@@ -77,80 +146,150 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $projStmt->execute([$project_id]);
         $projectName = $projStmt->fetchColumn() ?: 'Project';
 
-        $msg = "LKR " . number_format($amount, 2) . " ($type) recorded via $method for $projectName.";
-        if ($bank_name) $msg .= " Bank: $bank_name.";
-        
-        create_notification(
-            $pdo,
-            'Bank Payment Recorded',
-            $msg,
-            'success',
-            '/ccms/finance/payments.php'
-        );
+        if ($role === 'Client') {
+            // Forward approval request to Administrator, Project Manager, and Finance Officer
+            $approvers = $pdo->query("SELECT user_id FROM users WHERE role IN ('Administrator','Project Manager','Finance Officer') AND status='active'")->fetchAll(PDO::FETCH_COLUMN);
+            $notifStmt = $pdo->prepare("INSERT INTO notifications (user_id, title, message, type, link, created_by) VALUES (?, ?, ?, ?, ?, ?)");
+            foreach ($approvers as $apprId) {
+                $notifStmt->execute([
+                    $apprId,
+                    'Client Payment Request',
+                    "Client payment request of LKR " . number_format($amount, 2) . " for '$projectName' is pending your approval.",
+                    'warning',
+                    '/ccms/finance/payments.php',
+                    $userId
+                ]);
+            }
+
+            set_flash('info', "Your payment of LKR " . number_format($amount, 2) . " has been submitted. Status is Pending approval by management.", 'Payment Submitted');
+        } else {
+            $msg = "LKR " . number_format($amount, 2) . " ($type) recorded via $method for $projectName.";
+            if ($bank_name) $msg .= " Bank: $bank_name.";
+            create_notification(
+                $pdo,
+                'Bank Payment Recorded',
+                $msg,
+                'success',
+                '/ccms/finance/payments.php'
+            );
+        }
 
         redirect('/ccms/finance/payments.php');
     }
 }
 
-// Fetch payment totals
-$totalPayments = $pdo->query("SELECT SUM(amount) FROM payments")->fetchColumn() ?: 0;
-$totalBank = $pdo->query("SELECT SUM(amount) FROM payments WHERE payment_method IN ('Bank Transfer','Bank Deposit','Online Payment')")->fetchColumn() ?: 0;
-$totalClient = $pdo->query("SELECT SUM(amount) FROM payments WHERE payment_type = 'Client Payment'")->fetchColumn() ?: 0;
-$totalSupplier = $pdo->query("SELECT SUM(amount) FROM payments WHERE payment_type = 'Supplier Payment'")->fetchColumn() ?: 0;
+// Fetch payment totals and list based on role
+if ($role === 'Client') {
+    $payStmt = $pdo->prepare("
+        SELECT pay.*, p.project_name, u.full_name 
+        FROM payments pay
+        JOIN projects p ON p.project_id = pay.project_id
+        JOIN users u ON u.user_id = pay.recorded_by
+        LEFT JOIN clients c ON c.client_id = p.client_id
+        WHERE pay.recorded_by = ? 
+           OR c.email = (SELECT email FROM users WHERE user_id=?) 
+           OR c.nic_number = (SELECT nic_number FROM users WHERE user_id=?)
+        ORDER BY pay.created_at DESC 
+        LIMIT 100
+    ");
+    $payStmt->execute([$userId, $userId, $userId]);
+    $payments = $payStmt->fetchAll();
 
-// Fetch payments list
-$payments = $pdo->query("
-    SELECT pay.*, p.project_name, u.full_name 
-    FROM payments pay
-    JOIN projects p ON p.project_id = pay.project_id
-    JOIN users u ON u.user_id = pay.recorded_by
-    ORDER BY pay.created_at DESC 
-    LIMIT 100
-")->fetchAll();
+    $totalPayments = 0;
+    $totalApproved = 0;
+    $totalPending = 0;
+    foreach ($payments as $item) {
+        $amt = (float)$item['amount'];
+        $totalPayments += $amt;
+        if (in_array($item['status'], ['Approved', 'Verified'])) {
+            $totalApproved += $amt;
+        } elseif ($item['status'] === 'Pending') {
+            $totalPending += $amt;
+        }
+    }
+    $totalSupplier = 0;
+} else {
+    $totalPayments = $pdo->query("SELECT SUM(amount) FROM payments")->fetchColumn() ?: 0;
+    $totalApproved = $pdo->query("SELECT SUM(amount) FROM payments WHERE status IN ('Approved', 'Verified')")->fetchColumn() ?: 0;
+    $totalPending  = $pdo->query("SELECT SUM(amount) FROM payments WHERE status = 'Pending'")->fetchColumn() ?: 0;
+    $totalSupplier = $pdo->query("SELECT SUM(amount) FROM payments WHERE payment_type = 'Supplier Payment'")->fetchColumn() ?: 0;
+
+    $payments = $pdo->query("
+        SELECT pay.*, p.project_name, u.full_name 
+        FROM payments pay
+        JOIN projects p ON p.project_id = pay.project_id
+        JOIN users u ON u.user_id = pay.recorded_by
+        ORDER BY pay.created_at DESC 
+        LIMIT 100
+    ")->fetchAll();
+}
+
+$pendingRequestsCount = 0;
+foreach ($payments as $item) {
+    if ($item['status'] === 'Pending') {
+        $pendingRequestsCount++;
+    }
+}
 
 require_once __DIR__ . '/../includes/page_start.php';
 ?>
+
+<!-- Pending Requests Alert Banner for Approvers -->
+<?php if ($canApprove && $pendingRequestsCount > 0): ?>
+<div class="alert alert-warning border-warning d-flex align-items-center justify-content-between p-3 mb-4 shadow-sm">
+  <div class="d-flex align-items-center gap-2">
+    <i class="bi bi-exclamation-triangle-fill fs-4 text-warning"></i>
+    <div>
+      <strong class="d-block">Payment Approval Requests Awaiting Action (<?php echo $pendingRequestsCount; ?>)</strong>
+      <span class="small opacity-75">There are client payment submissions waiting for approval. As an authorized role (<?php echo htmlspecialchars($role); ?>), you can approve or reject them below.</span>
+    </div>
+  </div>
+  <a href="#paymentHistoryTable" class="btn btn-sm btn-warning text-dark fw-bold px-3">
+    <i class="bi bi-arrow-down-circle me-1"></i> Review Requests
+  </a>
+</div>
+<?php endif; ?>
 
 <!-- Summary Cards -->
 <div class="row g-3 mb-4">
   <div class="col-md-3">
     <div class="ccms-stat-card bg-ccms-1">
       <div class="d-flex align-items-center justify-content-between">
-        <span class="small fw-bold text-uppercase">Total Payments</span>
+        <span class="small fw-bold text-uppercase"><?php echo $role === 'Client' ? 'Total Submitted' : 'Total Payments'; ?></span>
         <i class="bi bi-cash-stack fs-4"></i>
       </div>
       <div class="stat-value">LKR <?php echo number_format($totalPayments, 2); ?></div>
-      <div class="small opacity-75 mt-1">All payment records</div>
+      <div class="small opacity-75 mt-1"><?php echo $role === 'Client' ? 'Your total payments' : 'All payment records'; ?></div>
     </div>
   </div>
   <div class="col-md-3">
     <div class="ccms-stat-card bg-ccms-2">
       <div class="d-flex align-items-center justify-content-between">
-        <span class="small fw-bold text-uppercase">Bank Payments</span>
-        <i class="bi bi-bank fs-4"></i>
+        <span class="small fw-bold text-uppercase">Approved Payments</span>
+        <i class="bi bi-check-circle-fill fs-4 text-emerald"></i>
       </div>
-      <div class="stat-value">LKR <?php echo number_format($totalBank, 2); ?></div>
-      <div class="small opacity-75 mt-1">Transfers & Deposits</div>
+      <div class="stat-value text-emerald">LKR <?php echo number_format($totalApproved, 2); ?></div>
+      <div class="small opacity-75 mt-1">Verified & Approved</div>
     </div>
   </div>
   <div class="col-md-3">
     <div class="ccms-stat-card bg-ccms-3">
       <div class="d-flex align-items-center justify-content-between">
-        <span class="small fw-bold text-uppercase">Client Payments</span>
-        <i class="bi bi-person-check-fill fs-4"></i>
+        <span class="small fw-bold text-uppercase">Pending Approval</span>
+        <i class="bi bi-hourglass-split fs-4 text-warning"></i>
       </div>
-      <div class="stat-value">LKR <?php echo number_format($totalClient, 2); ?></div>
-      <div class="small opacity-75 mt-1">Income received</div>
+      <div class="stat-value text-warning">LKR <?php echo number_format($totalPending, 2); ?></div>
+      <div class="small opacity-75 mt-1"><?php echo $pendingRequestsCount; ?> record(s) pending</div>
     </div>
   </div>
   <div class="col-md-3">
     <div class="ccms-stat-card bg-ccms-4">
       <div class="d-flex align-items-center justify-content-between">
-        <span class="small fw-bold text-uppercase">Supplier Payments</span>
-        <i class="bi bi-truck fs-4"></i>
+        <span class="small fw-bold text-uppercase"><?php echo $role === 'Client' ? 'Records Count' : 'Supplier Payments'; ?></span>
+        <i class="bi bi-<?php echo $role === 'Client' ? 'receipt' : 'truck'; ?> fs-4"></i>
       </div>
-      <div class="stat-value">LKR <?php echo number_format($totalSupplier, 2); ?></div>
-      <div class="small opacity-75 mt-1">Vendor disbursements</div>
+      <div class="stat-value"><?php echo $role === 'Client' ? count($payments) . ' Transactions' : 'LKR ' . number_format($totalSupplier, 2); ?></div>
+      <div class="small opacity-75 mt-1"><?php echo $role === 'Client' ? 'Total transaction records' : 'Vendor disbursements'; ?></div>
     </div>
   </div>
 </div>
@@ -159,8 +298,16 @@ require_once __DIR__ . '/../includes/page_start.php';
   <!-- Record Payment Form -->
   <div class="col-lg-4">
     <div class="card p-3">
-      <h6 class="fw-bold text-warning mb-3"><i class="bi bi-bank2 me-2"></i>Record Bank Payment</h6>
+      <h6 class="fw-bold text-warning mb-3">
+        <?php echo $role === 'Client' ? '<i class="bi bi-wallet2 me-2"></i>Make Client Payment' : '<i class="bi bi-bank2 me-2"></i>Record Bank Payment'; ?>
+      </h6>
       
+      <?php if ($role === 'Client'): ?>
+        <div class="alert alert-info py-2 small mb-3">
+          <i class="bi bi-info-circle-fill me-1"></i> Payments recorded here will be submitted with <strong>Pending</strong> status and forwarded to Administrator, Project Manager, and Finance Officer for verification.
+        </div>
+      <?php endif; ?>
+
       <?php foreach ($errors as $e): ?>
         <div class="alert alert-danger py-2 small mb-2"><i class="bi bi-exclamation-triangle-fill me-1"></i><?php echo htmlspecialchars($e); ?></div>
       <?php endforeach; ?>
@@ -183,11 +330,16 @@ require_once __DIR__ . '/../includes/page_start.php';
         <div class="row g-2 mb-2">
           <div class="col-6">
             <label class="form-label small required">Category</label>
-            <select name="payment_type" class="form-select form-select-sm" required>
-              <option value="Client Payment">Client Payment</option>
-              <option value="Supplier Payment">Supplier Payment</option>
-              <option value="Other">Other</option>
-            </select>
+            <?php if ($role === 'Client'): ?>
+              <input type="hidden" name="payment_type" value="Client Payment">
+              <input type="text" class="form-control form-control-sm" value="Client Payment" readonly disabled>
+            <?php else: ?>
+              <select name="payment_type" class="form-select form-select-sm" required>
+                <option value="Client Payment">Client Payment</option>
+                <option value="Supplier Payment">Supplier Payment</option>
+                <option value="Other">Other</option>
+              </select>
+            <?php endif; ?>
           </div>
           <div class="col-6">
             <label class="form-label small required">Payment Method</label>
@@ -212,7 +364,6 @@ require_once __DIR__ . '/../includes/page_start.php';
             <option value="Sampath Bank">Sampath Bank</option>
             <option value="Seylan Bank">Seylan Bank</option>
             <option value="Nations Trust Bank (NTB)">Nations Trust Bank (NTB)</option>
-
             <option value="National Development Bank (NDB)">National Development Bank (NDB)</option>
             <option value="DFCC Bank">DFCC Bank</option>
             <option value="Union Bank">Union Bank</option>
@@ -253,7 +404,10 @@ require_once __DIR__ . '/../includes/page_start.php';
           <textarea name="notes" class="form-control form-control-sm" rows="2" placeholder="Optional reference notes..."><?php echo htmlspecialchars($_POST['notes'] ?? ''); ?></textarea>
         </div>
 
-        <button class="btn btn-sm btn-success w-100 py-2"><i class="bi bi-check-circle-fill me-1"></i> Record Bank Payment</button>
+        <button class="btn btn-sm btn-success w-100 py-2">
+          <i class="bi bi-<?php echo $role === 'Client' ? 'send-check' : 'check-circle-fill'; ?> me-1"></i>
+          <?php echo $role === 'Client' ? 'Submit Payment Request' : 'Record Bank Payment'; ?>
+        </button>
       </form>
     </div>
   </div>
@@ -262,11 +416,13 @@ require_once __DIR__ . '/../includes/page_start.php';
   <div class="col-lg-8">
     <div class="card p-3">
       <div class="d-flex align-items-center justify-content-between mb-3">
-        <h6 class="fw-bold text-cyan mb-0"><i class="bi bi-journal-text me-2"></i>Bank Payment History</h6>
+        <h6 class="fw-bold text-cyan mb-0">
+          <i class="bi bi-journal-text me-2"></i><?php echo $role === 'Client' ? 'Your Payment History' : 'Bank Payment History'; ?>
+        </h6>
         <span class="badge bg-secondary font-monospace"><?php echo count($payments); ?> Records</span>
       </div>
 
-      <div class="table-responsive">
+      <div class="table-responsive" id="paymentHistoryTable">
         <table class="table table-sm table-hover align-middle">
           <thead>
             <tr>
@@ -277,14 +433,15 @@ require_once __DIR__ . '/../includes/page_start.php';
               <th>Amount (LKR)</th>
               <th>Slip / Receipt</th>
               <th>Status</th>
+              <?php if ($canApprove): ?><th>Approval Action</th><?php endif; ?>
             </tr>
           </thead>
           <tbody>
           <?php if (!$payments): ?>
-            <tr><td colspan="7" class="text-center text-muted py-4">No bank payments recorded yet.</td></tr>
+            <tr><td colspan="<?php echo $canApprove ? 8 : 7; ?>" class="text-center text-muted py-4">No bank payments recorded yet.</td></tr>
           <?php endif; ?>
           <?php foreach ($payments as $p): ?>
-            <tr>
+            <tr class="<?php echo $p['status'] === 'Pending' ? 'table-warning table-opacity-10' : ''; ?>">
               <td class="font-monospace small"><?php echo $p['payment_date']; ?></td>
               <td>
                 <span class="fw-semibold text-light"><?php echo htmlspecialchars($p['project_name']); ?></span>
@@ -320,8 +477,42 @@ require_once __DIR__ . '/../includes/page_start.php';
                 </div>
               </td>
               <td>
-                <span class="badge bg-success"><i class="bi bi-check-circle me-1"></i><?php echo htmlspecialchars($p['status'] ?? 'Verified'); ?></span>
+                <?php if ($p['status'] === 'Pending'): ?>
+                  <span class="badge bg-warning text-dark"><i class="bi bi-clock-history me-1"></i>Pending</span>
+                <?php elseif (in_array($p['status'], ['Approved', 'Verified'])): ?>
+                  <span class="badge bg-success"><i class="bi bi-check-circle-fill me-1"></i>Approved</span>
+                <?php elseif ($p['status'] === 'Rejected'): ?>
+                  <span class="badge bg-danger"><i class="bi bi-x-circle-fill me-1"></i>Rejected</span>
+                <?php else: ?>
+                  <span class="badge bg-secondary"><?php echo htmlspecialchars($p['status']); ?></span>
+                <?php endif; ?>
               </td>
+              <?php if ($canApprove): ?>
+              <td>
+                <?php if ($p['status'] === 'Pending'): ?>
+                  <div class="d-flex gap-1">
+                    <form method="post" onsubmit="return confirm('Approve this payment of LKR <?php echo number_format($p['amount'], 2); ?> for <?php echo htmlspecialchars(addslashes($p['project_name'])); ?>?');" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+                      <input type="hidden" name="action" value="approve_payment">
+                      <input type="hidden" name="payment_id" value="<?php echo $p['payment_id']; ?>">
+                      <button type="submit" class="btn btn-xs btn-success py-1 px-2 text-nowrap">
+                        <i class="bi bi-check-lg me-1"></i>Approve
+                      </button>
+                    </form>
+                    <form method="post" onsubmit="return confirm('Reject this payment request?');" class="d-inline">
+                      <input type="hidden" name="csrf_token" value="<?php echo csrf_token(); ?>">
+                      <input type="hidden" name="action" value="reject_payment">
+                      <input type="hidden" name="payment_id" value="<?php echo $p['payment_id']; ?>">
+                      <button type="submit" class="btn btn-xs btn-outline-danger py-1 px-2 text-nowrap">
+                        <i class="bi bi-x-lg me-1"></i>Reject
+                      </button>
+                    </form>
+                  </div>
+                <?php else: ?>
+                  <span class="small text-muted">-</span>
+                <?php endif; ?>
+              </td>
+              <?php endif; ?>
             </tr>
           <?php endforeach; ?>
           </tbody>
@@ -407,7 +598,7 @@ require_once __DIR__ . '/../includes/page_start.php';
 
           <div class="d-flex justify-content-between align-items-center pt-2 border-top border-secondary text-muted small">
             <span>Recorded By: <strong class="text-light" id="rcptUser">-</strong></span>
-            <span class="badge bg-success">Status: VERIFIED</span>
+            <span id="rcptStatusWrapper"><span class="badge bg-success" id="rcptStatusBadge">Status: APPROVED</span></span>
           </div>
         </div>
       </div>
@@ -445,6 +636,18 @@ function showReceipt(p) {
   document.getElementById('rcptRef').textContent = p.reference_number || 'N/A';
   document.getElementById('rcptAmount').textContent = 'LKR ' + parseFloat(p.amount).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
   document.getElementById('rcptUser').textContent = p.full_name;
+
+  var statusBadge = document.getElementById('rcptStatusBadge');
+  var st = (p.status === 'Verified' || p.status === 'Approved') ? 'Approved' : (p.status || 'Pending');
+  statusBadge.textContent = 'Status: ' + st.toUpperCase();
+  if (st === 'Approved') {
+    statusBadge.className = 'badge bg-success';
+  } else if (st === 'Pending') {
+    statusBadge.className = 'badge bg-warning text-dark';
+  } else {
+    statusBadge.className = 'badge bg-danger';
+  }
+
   modal.show();
 }
 </script>

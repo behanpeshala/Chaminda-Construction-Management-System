@@ -48,8 +48,12 @@ try {
         echo "Added notes column.\n";
     }
     if (!in_array('status', $cols)) {
-        $pdo->exec("ALTER TABLE payments ADD COLUMN status ENUM('Verified', 'Pending', 'Rejected') NOT NULL DEFAULT 'Verified' AFTER notes");
+        $pdo->exec("ALTER TABLE payments ADD COLUMN status ENUM('Approved', 'Verified', 'Pending', 'Rejected') NOT NULL DEFAULT 'Pending' AFTER notes");
         echo "Added status column.\n";
+    } else {
+        $pdo->exec("ALTER TABLE payments MODIFY COLUMN status ENUM('Approved', 'Verified', 'Pending', 'Rejected') NOT NULL DEFAULT 'Pending'");
+        $pdo->exec("UPDATE payments SET status = 'Approved' WHERE status = 'Verified'");
+        echo "Updated payments status enum and legacy records.\n";
     }
 
     // 3. Employees table columns

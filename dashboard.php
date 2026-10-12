@@ -25,7 +25,7 @@ $pendingRequests = count_rows($pdo, "SELECT COUNT(*) FROM material_requests WHER
 $pendingPOs      = count_rows($pdo, "SELECT COUNT(*) FROM purchase_orders WHERE status IN ('Pending','Approved')");
 $totalBudget     = sum_col($pdo, "SELECT COALESCE(SUM(allocated_amount),0) FROM budgets");
 $totalExpense    = sum_col($pdo, "SELECT COALESCE(SUM(amount),0) FROM expenses");
-$totalPayments   = sum_col($pdo, "SELECT COALESCE(SUM(amount),0) FROM payments");
+$totalPayments   = sum_col($pdo, "SELECT COALESCE(SUM(amount),0) FROM payments WHERE status IN ('Approved', 'Verified')");
 
 try {
     $projByStatus = $pdo->query("SELECT status, COUNT(*) c FROM projects GROUP BY status")->fetchAll();
@@ -96,7 +96,9 @@ require_once __DIR__ . '/includes/page_start.php';
     
     <?php if ($role === 'Client'): ?>
       <a href="/ccms/finance/payments.php" class="btn btn-sm btn-success"><i class="bi bi-bank2 me-1"></i> Make Bank Payment</a>
-      <a href="/ccms/material_requests/create.php" class="btn btn-sm btn-outline-cyan"><i class="bi bi-truck me-1"></i> Request Material / Inquiry</a>
+      <a href="/ccms/finance/budgets.php" class="btn btn-sm btn-outline-info"><i class="bi bi-wallet2 me-1"></i> Project Budgets</a>
+      <a href="/ccms/finance/expenses.php" class="btn btn-sm btn-outline-cyan"><i class="bi bi-receipt me-1"></i> Project Expenses</a>
+      <a href="/ccms/material_requests/create.php" class="btn btn-sm btn-outline-secondary"><i class="bi bi-truck me-1"></i> Request Material / Inquiry</a>
       <a href="/ccms/projects/list.php" class="btn btn-sm btn-outline-info"><i class="bi bi-kanban me-1"></i> View My Projects</a>
       <a href="/ccms/reports/index.php" class="btn btn-sm btn-outline-warning"><i class="bi bi-bar-chart me-1"></i> View Progress Reports</a>
     
@@ -108,7 +110,10 @@ require_once __DIR__ . '/includes/page_start.php';
 
     <?php elseif ($role === 'Procurement Staff'): ?>
       <a href="/ccms/purchase_orders/create.php" class="btn btn-sm btn-success"><i class="bi bi-cart-plus me-1"></i> Create Purchase Order</a>
-      <a href="/ccms/suppliers/create.php" class="btn btn-sm btn-outline-cyan"><i class="bi bi-truck-front me-1"></i> Register New Supplier</a>
+      <a href="/ccms/finance/payments.php" class="btn btn-sm btn-outline-secondary"><i class="bi bi-bank2 me-1"></i> Bank Payments</a>
+      <a href="/ccms/finance/expenses.php" class="btn btn-sm btn-outline-cyan"><i class="bi bi-receipt me-1"></i> Expenses</a>
+      <a href="/ccms/finance/budgets.php" class="btn btn-sm btn-outline-info"><i class="bi bi-wallet2 me-1"></i> Budgets</a>
+      <a href="/ccms/suppliers/create.php" class="btn btn-sm btn-outline-secondary"><i class="bi bi-truck-front me-1"></i> Register New Supplier</a>
       <a href="/ccms/material_requests/list.php" class="btn btn-sm btn-outline-info"><i class="bi bi-truck me-1"></i> View Approved Requests</a>
       <a href="/ccms/purchase_orders/list.php" class="btn btn-sm btn-outline-warning"><i class="bi bi-journal-check me-1"></i> View Purchase Orders</a>
 
@@ -120,6 +125,9 @@ require_once __DIR__ . '/includes/page_start.php';
 
     <?php elseif ($role === 'Project Manager'): ?>
       <a href="/ccms/projects/create.php" class="btn btn-sm btn-success"><i class="bi bi-plus-circle me-1"></i> Register New Project</a>
+      <a href="/ccms/finance/budgets.php" class="btn btn-sm btn-outline-info"><i class="bi bi-wallet2 me-1"></i> Budgets</a>
+      <a href="/ccms/finance/expenses.php" class="btn btn-sm btn-outline-cyan"><i class="bi bi-receipt me-1"></i> Expenses</a>
+      <a href="/ccms/finance/payments.php" class="btn btn-sm btn-outline-secondary"><i class="bi bi-bank2 me-1"></i> Bank Payments</a>
       <a href="/ccms/clients/create.php" class="btn btn-sm btn-outline-cyan"><i class="bi bi-person-plus me-1"></i> Register Client</a>
       <a href="/ccms/employees/create.php" class="btn btn-sm btn-outline-info"><i class="bi bi-person-badge me-1"></i> Add Employee</a>
       <a href="/ccms/material_requests/list.php" class="btn btn-sm btn-outline-warning"><i class="bi bi-check-square me-1"></i> Approve Material Requests</a>

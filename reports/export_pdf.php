@@ -8,7 +8,7 @@ $id   = (int)($_GET['id'] ?? 0);
 $allowed = [
     'projects'        => ['Administrator','Project Manager','Site Staff','Client'],
     'inventory'       => ['Administrator','Site Staff','Project Manager'],
-    'financial'       => ['Administrator','Finance Officer'],
+    'financial'       => ['Administrator','Finance Officer','Project Manager','Client','Procurement Staff'],
     'purchase_orders' => ['Administrator','Procurement Staff'],
     'po_single'       => ['Administrator','Procurement Staff','Project Manager','Finance Officer'],
 ];
@@ -76,7 +76,7 @@ switch ($type) {
         $headers = ['Project Name', 'Allocated Budget (LKR)', 'Total Expenses (LKR)', 'Total Payments (LKR)', 'Net Variance (LKR)'];
         $stmt = $pdo->query("SELECT p.project_name, COALESCE(b.allocated_amount,0) AS budget,
                                      COALESCE((SELECT SUM(amount) FROM expenses e WHERE e.project_id=p.project_id),0) AS expenses,
-                                     COALESCE((SELECT SUM(amount) FROM payments pay WHERE pay.project_id=p.project_id),0) AS payments
+                                     COALESCE((SELECT SUM(amount) FROM payments pay WHERE pay.project_id=p.project_id AND pay.status IN ('Approved','Verified')),0) AS payments
                               FROM projects p LEFT JOIN budgets b ON b.project_id=p.project_id ORDER BY p.created_at DESC");
         while ($r = $stmt->fetch()) {
             $b = (float)$r['budget'];

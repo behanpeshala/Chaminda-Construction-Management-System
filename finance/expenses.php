@@ -1,6 +1,6 @@
 <?php
 require_once __DIR__ . '/../includes/auth.php';
-require_role(['Administrator','Finance Officer']);
+require_role(['Administrator','Finance Officer','Project Manager','Client','Procurement Staff']);
 $page_title = 'Expenses';
 
 $projects = $pdo->query("SELECT project_id, project_name FROM projects ORDER BY project_name")->fetchAll();
