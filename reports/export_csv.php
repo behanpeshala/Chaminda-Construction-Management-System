@@ -7,8 +7,9 @@ $type = $_GET['type'] ?? '';
 $allowed = [
     'projects'        => ['Administrator','Project Manager','Site Staff','Client'],
     'inventory'       => ['Administrator','Site Staff','Project Manager'],
-    'financial'       => ['Administrator','Finance Officer'],
+    'financial'       => ['Administrator','Finance Officer','Project Manager','Client','Procurement Staff'],
     'purchase_orders' => ['Administrator','Procurement Staff'],
+    'users'           => ['Administrator','Project Manager'],
 ];
 if (!isset($allowed[$type]) || !in_array($role, $allowed[$type], true)) {
     http_response_code(403); die('Access denied for this report.');
@@ -54,5 +55,12 @@ switch ($type) {
                               FROM purchase_orders po JOIN suppliers s ON s.supplier_id=po.supplier_id ORDER BY po.created_at DESC")->fetchAll(PDO::FETCH_NUM);
         csv_out('purchase_orders_report.csv',
             ['PO Number','Supplier','Status','Created At','Total (LKR)'], $rows);
+        break;
+
+    case 'users':
+        $rows = $pdo->query("SELECT CONCAT('#USR-', LPAD(user_id, 3, '0')), full_name, username, role, email, COALESCE(phone, 'N/A'), COALESCE(nic_number, 'N/A'), status, created_at
+                              FROM users ORDER BY user_id ASC")->fetchAll(PDO::FETCH_NUM);
+        csv_out('system_users_report.csv',
+            ['User ID', 'Full Name', 'Username', 'Role', 'Email', 'Phone', 'NIC Number', 'Status', 'Registered Date'], $rows);
         break;
 }

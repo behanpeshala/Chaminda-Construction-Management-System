@@ -11,6 +11,7 @@ $allowed = [
     'financial'       => ['Administrator','Finance Officer','Project Manager','Client','Procurement Staff'],
     'purchase_orders' => ['Administrator','Procurement Staff'],
     'po_single'       => ['Administrator','Procurement Staff','Project Manager','Finance Officer'],
+    'users'           => ['Administrator','Project Manager'],
 ];
 
 if (!isset($allowed[$type]) || !in_array($role, $allowed[$type], true)) {
@@ -145,6 +146,27 @@ switch ($type) {
         $hasAmount = true;
         $summaryText = 'Total Invoice Amount';
         break;
+
+    case 'users':
+        $title = 'System Users & Account Directory Statement';
+        $headers = ['User ID', 'Full Name', 'Username', 'Role', 'Email', 'Phone', 'NIC Number', 'Status', 'Registered Date'];
+        $stmt = $pdo->query("SELECT user_id, full_name, username, role, email, phone, nic_number, status, created_at FROM users ORDER BY user_id ASC");
+        while ($r = $stmt->fetch()) {
+            $rows[] = [
+                '#USR-' . str_pad($r['user_id'], 3, '0', STR_PAD_LEFT),
+                $r['full_name'],
+                $r['username'],
+                $r['role'],
+                $r['email'],
+                $r['phone'] ?: 'N/A',
+                $r['nic_number'] ?: 'N/A',
+                strtoupper($r['status']),
+                date('Y-m-d', strtotime($r['created_at']))
+            ];
+        }
+        $hasAmount = false;
+        $summaryText = 'Total Registered System Users';
+        break;
 }
 
 ?>
@@ -167,7 +189,7 @@ switch ($type) {
     padding: 20px 0;
   }
   .action-bar {
-    max-width: 900px;
+    max-width: <?php echo (count($headers) >= 8) ? "1080px" : "900px"; ?>;
     margin: 0 auto 20px auto;
     display: flex;
     justify-content: space-between;
@@ -175,7 +197,7 @@ switch ($type) {
   }
   .invoice-card {
     background: #ffffff;
-    max-width: 900px;
+    max-width: <?php echo (count($headers) >= 8) ? "1080px" : "900px"; ?>;
     margin: 0 auto;
     border-radius: 12px;
     box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
@@ -363,6 +385,13 @@ switch ($type) {
       <span class="amount-val">LKR <?php echo number_format($totalAmount, 2); ?></span>
     </div>
   </div>
+  <?php elseif ($summaryText !== ''): ?>
+  <div class="totals-box">
+    <div class="d-flex justify-content-between align-items-center">
+      <span class="fw-bold text-dark small text-uppercase"><?php echo htmlspecialchars($summaryText); ?>:</span>
+      <span class="amount-val text-success"><?php echo count($rows); ?> Records</span>
+    </div>
+  </div>
   <?php endif; ?>
 
   <!-- Authorization Signatures -->
@@ -371,7 +400,7 @@ switch ($type) {
       <div class="signature-line">Prepared By<br><strong><?php echo htmlspecialchars(current_name()); ?></strong></div>
     </div>
     <div>
-      <div class="signature-line">Checked & Audited By<br><strong>Finance Department</strong></div>
+      <div class="signature-line">Checked & Audited By<br><strong>Management Department</strong></div>
     </div>
     <div>
       <div class="signature-line">Authorized Signatory<br><strong>Chaminda Construction</strong></div>
@@ -393,7 +422,7 @@ function downloadPDF() {
     filename:     '<?php echo $refNo; ?>.pdf',
     image:        { type: 'jpeg', quality: 0.98 },
     html2canvas:  { scale: 2, useCORS: true },
-    jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+    jsPDF:        { unit: 'in', format: 'letter', orientation: '<?php echo (count($headers) >= 8) ? "landscape" : "portrait"; ?>' }
   };
   html2pdf().set(opt).from(element).save();
 }

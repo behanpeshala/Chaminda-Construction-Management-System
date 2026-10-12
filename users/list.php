@@ -2,7 +2,7 @@
 require_once __DIR__ . '/../includes/auth.php';
 require_role(['Administrator']);
 $page_title = 'Users';
-$page_actions = '<a href="/ccms/users/create.php" class="btn btn-success"><i class="bi bi-plus-lg"></i> New User</a>';
+$page_actions = '<a href="/ccms/reports/export_pdf.php?type=users" class="btn btn-outline-info me-2"><i class="bi bi-file-earmark-pdf"></i> Export Users Report</a><a href="/ccms/users/create.php" class="btn btn-success"><i class="bi bi-plus-lg"></i> New User</a>';
 
 $search = trim($_GET['q'] ?? '');
 $sql = "SELECT * FROM users WHERE (full_name LIKE ? OR username LIKE ? OR email LIKE ? OR nic_number LIKE ?) ORDER BY created_at DESC";
