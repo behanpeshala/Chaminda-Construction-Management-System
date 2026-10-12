@@ -261,10 +261,17 @@
     margin: 20px 0 24px;
   }
   .hero-content h1 span.gradient-text {
-    background: linear-gradient(135deg, var(--amber) 0%, var(--gold) 60%, #FFF 100%);
+    background: linear-gradient(
+        135deg,
+        var(--amber) 0%,
+        var(--gold) 60%,
+        #FFF 100%
+    );
+
+    background-clip: text;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-  }
+}
   .hero-subtitle {
     font-size: 1.12rem;
     color: var(--text-secondary);
@@ -396,9 +403,10 @@
   .metrics-section {
     padding: 40px 0;
     background: var(--ink-dark);
-    border-y: 1px solid var(--border-light);
+    border-top: 1px solid var(--border-light);
+    border-bottom: 1px solid var(--border-light);
     margin-top: 40px;
-  }
+}
   .metrics-grid {
     display: grid;
     grid-template-columns: repeat(4, 1fr);
