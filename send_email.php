@@ -2,28 +2,28 @@
 header('Content-Type: application/json; charset=utf-8');
 
 // Target email address
-$recipient_email = "behanpeshala@gmail.com";
+$recipient_email = "chamindaconstructionn@gmail.com";
 
 // Database connection check & table creation
 $db_connected = false;
-$pdo = null;
 if (file_exists(__DIR__ . '/config/db.php')) {
     try {
         require_once __DIR__ . '/config/db.php';
-        $db_connected = true;
-        
-        // Auto-create contact_messages table if missing
-        $pdo->exec("CREATE TABLE IF NOT EXISTS contact_messages (
-            id INT AUTO_INCREMENT PRIMARY KEY,
-            sender_name VARCHAR(100) NOT NULL,
-            sender_email VARCHAR(100) NOT NULL,
-            sender_phone VARCHAR(30) NULL,
-            subject VARCHAR(200) NOT NULL,
-            message TEXT NOT NULL,
-            recipient_email VARCHAR(100) NOT NULL,
-            status VARCHAR(50) NOT NULL DEFAULT 'Received',
-            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
-        ) ENGINE=InnoDB;");
+        if (isset($pdo) && $pdo instanceof PDO) {
+            $db_connected = true;
+            // Auto-create contact_messages table if missing
+            $pdo->exec("CREATE TABLE IF NOT EXISTS contact_messages (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                sender_name VARCHAR(100) NOT NULL,
+                sender_email VARCHAR(100) NOT NULL,
+                sender_phone VARCHAR(30) NULL,
+                subject VARCHAR(200) NOT NULL,
+                message TEXT NOT NULL,
+                recipient_email VARCHAR(100) NOT NULL,
+                status VARCHAR(50) NOT NULL DEFAULT 'Received',
+                created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+            ) ENGINE=InnoDB;");
+        }
     } catch (Exception $e) {
         // Silently continue if DB connection fails
     }
@@ -54,6 +54,17 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
     exit;
 }
 
+if (!empty($phone)) {
+    $clean_phone = preg_replace('/[\s\-]/', '', $phone);
+    if (!preg_match('/^(0[0-9]{9}|\+94[0-9]{9})$/', $clean_phone)) {
+        echo json_encode([
+            'success' => false,
+            'message' => 'Invalid phone number format. Must be 10 digits starting with 0 (e.g. 0712345678) or 11 characters starting with +94 (e.g. +94712345678).'
+        ]);
+        exit;
+    }
+}
+
 // Save inquiry to Database
 $db_saved = false;
 if ($db_connected && $pdo) {
@@ -61,6 +72,22 @@ if ($db_connected && $pdo) {
         $stmt = $pdo->prepare("INSERT INTO contact_messages (sender_name, sender_email, sender_phone, subject, message, recipient_email) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([$name, $email, $phone, $subject, $message, $recipient_email]);
         $db_saved = true;
+
+        // Create persistent CCMS notification for Administrator and Project Manager
+        $adminStmt = $pdo->query("SELECT user_id FROM users WHERE role IN ('Administrator','Project Manager') AND status='active'");
+        $adminIds = $adminStmt->fetchAll(PDO::FETCH_COLUMN);
+        if ($adminIds) {
+            $notifStmt = $pdo->prepare("INSERT INTO notifications (user_id, title, message, type, link, created_by) VALUES (?, ?, ?, ?, ?, NULL)");
+            foreach ($adminIds as $adminId) {
+                $notifStmt->execute([
+                    $adminId,
+                    'New Client Inquiry',
+                    "New direct inquiry from $name ($email): $subject",
+                    'info',
+                    '/ccms/messages/index.php'
+                ]);
+            }
+        }
     } catch (Exception $e) {
         // Continue if DB insert fails
     }
@@ -120,10 +147,16 @@ $headers .= "Reply-To: " . $name . " <" . $email . ">" . "\r\n";
 // Execute mail sending
 @$mail_sent = mail($recipient_email, $email_subject, $email_body, $headers);
 
+$mail_body_plain = "Name: $name\nEmail: $email\nPhone: " . ($phone ?: 'Not provided') . "\n\nMessage:\n$message";
+$mailto_url = "mailto:" . rawurlencode($recipient_email) . "?subject=" . rawurlencode("[Inquiry] " . $subject) . "&body=" . rawurlencode($mail_body_plain);
+$gmail_url = "https://mail.google.com/mail/?view=cm&fs=1&to=" . rawurlencode($recipient_email) . "&su=" . rawurlencode("[Inquiry] " . $subject) . "&body=" . rawurlencode($mail_body_plain);
+
 echo json_encode([
     'success' => true,
-    'message' => 'Your message has been sent successfully to behanpeshala@gmail.com!',
+    'message' => 'Your message has been sent successfully to chamindaconstructionn@gmail.com!',
     'mail_sent' => $mail_sent,
-    'db_saved' => $db_saved
+    'db_saved' => $db_saved,
+    'mailto_url' => $mailto_url,
+    'gmail_url' => $gmail_url
 ]);
 exit;

@@ -1830,7 +1830,7 @@
         Get In Touch
       </div>
       <h2>Contact Us &amp; Send An Email</h2>
-      <p>Have a project inquiry or request? Fill out the form below or email us directly at <strong>chamindaconstruction@gmail.com</strong>.</p>
+      <p>Have a project inquiry or request? Fill out the form below or email us directly at <strong>chamindaconstructionn@gmail.com</strong>.</p>
     </div>
 
     <div class="contact-grid">
@@ -1849,7 +1849,7 @@
             </div>
             <div>
               <div style="font-size: 0.78rem; text-transform: uppercase; color: var(--text-muted); font-family: 'Outfit';">Primary Email</div>
-              <a href="mailto:behanpeshala@gmail.com" style="font-size: 1.05rem; font-weight: 700; color: var(--amber); font-family: 'Outfit';">chamindaconstruction@gmail.com</a>
+              <a href="mailto:chamindaconstructionn@gmail.com" style="font-size: 1.05rem; font-weight: 700; color: var(--amber); font-family: 'Outfit';">chamindaconstructionn@gmail.com</a>
             </div>
           </div>
 
@@ -1875,7 +1875,7 @@
         </div>
 
         <div style="margin-top: 36px; padding-top: 24px; border-top: 1px solid var(--border-light);">
-          <a href="mailto:behanpeshala@gmail.com" class="btn btn-amber" style="width: 100%;">
+          <a href="mailto:chamindaconstructionn@gmail.com" class="btn btn-amber" style="width: 100%;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/><polyline points="22,6 12,13 2,6"/></svg>
             Open Mail App
           </a>
@@ -1886,7 +1886,7 @@
       <div class="contact-form-card">
         <h3 style="font-size: 1.6rem; color: #FFF; margin-bottom: 8px; font-weight: 800;">Send Us A Direct Email</h3>
         <p style="color: var(--text-secondary); margin-bottom: 24px; font-size: 0.95rem;">
-          Your inquiry will be sent straight to <strong>behanpeshala@gmail.com</strong>.
+          Your inquiry will be sent straight to <strong>chamindaconstructionn@gmail.com</strong>.
         </p>
 
         <form id="contactEmailForm" onsubmit="handleContactSubmit(event)">
@@ -1904,7 +1904,7 @@
           <div class="contact-form-row">
             <div class="form-group">
               <label for="contactPhone">PHONE NUMBER</label>
-              <input type="tel" id="contactPhone" name="phone" class="form-control" placeholder="+94 7X XXX XXXX">
+              <input type="tel" id="contactPhone" name="phone" class="form-control" placeholder="+94 7X XXX XXXX" pattern="^(0[0-9]{9}|\+94[0-9]{9})$" title="Enter 10 digits starting with 0 (e.g. 0712345678) or 11 characters starting with +94 (e.g. +94712345678)">
             </div>
             <div class="form-group">
               <label for="contactSubject">SUBJECT *</label>
@@ -1917,12 +1917,19 @@
             <textarea id="contactMessage" name="message" class="form-control" rows="5" placeholder="Write your message or project specifications here..." required style="resize: vertical;"></textarea>
           </div>
 
-          <div id="contactAlert" style="display: none; padding: 14px 18px; border-radius: var(--radius-md); margin-bottom: 20px; font-size: 0.9rem;"></div>
+          <div id="contactAlert" style="display: none; padding: 16px 20px; border-radius: var(--radius-md); margin-bottom: 20px; font-size: 0.95rem; line-height: 1.6;"></div>
 
-          <button type="submit" id="contactSubmitBtn" class="btn btn-amber" style="width: 100%; padding: 16px;">
+          <button type="submit" id="contactSubmitBtn" class="btn btn-amber" style="width: 100%; padding: 16px; font-weight: 700;">
             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
-            Send Email
+            Send Direct Email
           </button>
+
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-top: 14px; font-size: 0.82rem; color: var(--text-muted);">
+            <span><i class="bi bi-shield-check"></i> Direct to chamindaconstructionn@gmail.com</span>
+            <a href="mailto:chamindaconstructionn@gmail.com" style="color: var(--amber); text-decoration: none; font-weight: 600;">
+              Direct Mail Link &rarr;
+            </a>
+          </div>
         </form>
       </div>
 
@@ -1972,7 +1979,7 @@
         <p style="font-size:0.88rem; color:var(--text-secondary); line-height:1.6;">
           No. 145, Galle Road, Colombo 03, Sri Lanka<br>
           Phone: +94 11 200 0000<br>
-          Email: <a href="mailto:behanpeshala@gmail.com" style="color:var(--amber);">behanpeshala@gmail.com</a>
+          Email: <a href="mailto:chamindaconstructionn@gmail.com" style="color:var(--amber);">chamindaconstructionn@gmail.com</a>
         </p>
       </div>
     </div>
@@ -2162,21 +2169,49 @@
     `;
   }
 
-  // Contact Form Submission Handler (Sends email to behanpeshala@gmail.com)
+  // Contact Form Submission Handler (Sends email to chamindaconstructionn@gmail.com)
   async function handleContactSubmit(e) {
     e.preventDefault();
     const form = document.getElementById('contactEmailForm');
     const alertBox = document.getElementById('contactAlert');
     const btn = document.getElementById('contactSubmitBtn');
 
+    // Phone validation
+    const phoneInput = form.phone.value.trim();
+    if (phoneInput !== '') {
+      const cleanPhone = phoneInput.replace(/[\s\-]/g, '');
+      if (!/^(0[0-9]{9}|\+94[0-9]{9})$/.test(cleanPhone)) {
+        alertBox.style.display = 'block';
+        alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
+        alertBox.style.border = '1px solid #EF4444';
+        alertBox.style.color = '#FCA5A5';
+        alertBox.innerHTML = '✖ <strong>Invalid Phone Number:</strong> Must be 10 digits starting with 0 (e.g. 0712345678) or 11 characters starting with +94 (e.g. +94712345678).';
+        form.phone.focus();
+        return;
+      }
+    }
+
     btn.disabled = true;
     const originalBtnText = btn.innerHTML;
-    btn.innerHTML = `Sending Email...`;
+    btn.innerHTML = `<span style="display:inline-flex; align-items:center; gap:8px;">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" class="spin"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>
+      Sending Email...
+    </span>`;
 
     const formData = new FormData(form);
+    const endpoint = (window.location.protocol === 'file:') ? 'http://localhost/ccms/send_email.php' : 'send_email.php';
+
+    const sName = form.name.value;
+    const sEmail = form.email.value;
+    const sPhone = form.phone.value;
+    const sSub = form.subject.value || 'Project Inquiry';
+    const sMsg = form.message.value;
+    const mailBody = `Name: ${sName}\nEmail: ${sEmail}\nPhone: ${sPhone || 'N/A'}\n\nMessage:\n${sMsg}`;
+    const fallbackGmail = `https://mail.google.com/mail/?view=cm&fs=1&to=chamindaconstructionn@gmail.com&su=${encodeURIComponent('[Inquiry] ' + sSub)}&body=${encodeURIComponent(mailBody)}`;
+    const fallbackMailto = `mailto:chamindaconstructionn@gmail.com?subject=${encodeURIComponent('[Inquiry] ' + sSub)}&body=${encodeURIComponent(mailBody)}`;
 
     try {
-      const res = await fetch('send_email.php', {
+      const res = await fetch(endpoint, {
         method: 'POST',
         body: formData
       });
@@ -2185,9 +2220,28 @@
       alertBox.style.display = 'block';
       if (data.success) {
         alertBox.style.background = 'rgba(16, 185, 129, 0.15)';
-        alertBox.style.border = '1px solid var(--amber)';
+        alertBox.style.border = '1px solid #10B981';
         alertBox.style.color = '#34D399';
-        alertBox.innerHTML = '✔ <strong>Success!</strong> Your message has been sent to <strong>behanpeshala@gmail.com</strong>.';
+
+        const gmailUrl = data.gmail_url || fallbackGmail;
+        const mailtoUrl = data.mailto_url || fallbackMailto;
+
+        alertBox.innerHTML = `
+          <div style="font-size: 1rem; margin-bottom: 6px;">
+            ✔ <strong>Success!</strong> Your inquiry has been sent to <strong>chamindaconstructionn@gmail.com</strong>.
+          </div>
+          <p style="color: #CBD5E1; font-size: 0.88rem; margin: 0 0 12px 0;">
+            Our team has recorded your message in the CCMS system and will contact you shortly. You can also view or send directly from your preferred email client:
+          </p>
+          <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+            <a href="${gmailUrl}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; background: #EA4335; color: #fff; padding: 7px 16px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; text-decoration: none;">
+              Open In Gmail
+            </a>
+            <a href="${mailtoUrl}" style="display: inline-flex; align-items: center; gap: 6px; background: var(--amber); color: #000; padding: 7px 16px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; text-decoration: none;">
+              Open In Mail App
+            </a>
+          </div>
+        `;
         form.reset();
       } else {
         alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
@@ -2197,10 +2251,22 @@
       }
     } catch (err) {
       alertBox.style.display = 'block';
-      alertBox.style.background = 'rgba(239, 68, 68, 0.15)';
-      alertBox.style.border = '1px solid #EF4444';
-      alertBox.style.color = '#FCA5A5';
-      alertBox.innerHTML = '✖ An error occurred while sending email. You can also click the primary email link above to open your mail app.';
+      alertBox.style.background = 'rgba(245, 158, 11, 0.15)';
+      alertBox.style.border = '1px solid var(--amber)';
+      alertBox.style.color = '#FDE68A';
+      alertBox.innerHTML = `
+        <div style="margin-bottom: 8px;">
+          ✉ <strong>Send Directly via Your Mail App:</strong> Click below to deliver your message straight to <strong>chamindaconstructionn@gmail.com</strong>:
+        </div>
+        <div style="display: flex; gap: 8px; flex-wrap: wrap;">
+          <a href="${fallbackGmail}" target="_blank" style="display: inline-flex; align-items: center; gap: 6px; background: #EA4335; color: #fff; padding: 7px 16px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; text-decoration: none;">
+            Send via Gmail
+          </a>
+          <a href="${fallbackMailto}" style="display: inline-flex; align-items: center; gap: 6px; background: var(--amber); color: #000; padding: 7px 16px; border-radius: 6px; font-size: 0.82rem; font-weight: 700; text-decoration: none;">
+            Send via Mail App
+          </a>
+        </div>
+      `;
     } finally {
       btn.disabled = false;
       btn.innerHTML = originalBtnText;

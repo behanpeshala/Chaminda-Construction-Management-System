@@ -40,6 +40,9 @@ function nav_active($dir_or_file, $current_script) {
     <li class="nav-item">
       <a class="nav-link <?php echo nav_active('/employees/',$current_script); ?>" href="/ccms/employees/list.php"><i class="bi bi-people"></i> Employees</a>
     </li>
+    <li class="nav-item">
+      <a class="nav-link <?php echo nav_active('/messages/',$current_script); ?>" href="/ccms/messages/index.php"><i class="bi bi-envelope-paper"></i> Client Inquiries</a>
+    </li>
     <?php endif; ?>
 
     <?php if (in_array($role, ['Administrator','Project Manager','Site Staff','Client','Procurement Staff','Finance Officer'])): ?>
